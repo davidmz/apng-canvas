@@ -370,7 +370,11 @@
             var f = fNum++ % aPng.frames.length;
             var frame = aPng.frames[f];
 
-            if (f == 0 && frame.disposeOp != 0) frame.disposeOp = 0;
+            if (f == 0) {
+                ctx.clearRect(0, 0, aPng.width, aPng.height);
+                prevF = null;
+                if (frame.disposeOp == 2) frame.disposeOp = 1;
+            }
 
             if (prevF && prevF.disposeOp == 1) {
                 ctx.clearRect(prevF.left, prevF.top, prevF.width, prevF.height);
