@@ -44,18 +44,22 @@
         if (callback) d.promise().done(callback);
         if (!firstCall) return d.promise();
 
-        this.checkNativeFeatures().fail(function() {
-            // Если всё хорошо, то создаём VBScript-функцию для IE9
-            // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
-            if (typeof XMLHttpRequest.prototype.responseBody != "undefined") {
-                var script = document.createElement("script");
-                script.setAttribute('type','text/vbscript');
-                script.text =   "Function IEBinaryToBinStr(Binary)\r\n" +
-                                "   IEBinaryToBinStr = CStr(Binary)\r\n" +
-                                "End Function\r\n";
-                document.body.appendChild(script);
+        this.checkNativeFeatures().done(function(f) {
+            if (f.canvas && !f.apng) {
+                // Если всё хорошо, то создаём VBScript-функцию для IE9
+                // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
+                if (typeof XMLHttpRequest.prototype.responseBody != "undefined") {
+                    var script = document.createElement("script");
+                    script.setAttribute('type','text/vbscript');
+                    script.text =   "Function IEBinaryToBinStr(Binary)\r\n" +
+                                    "   IEBinaryToBinStr = CStr(Binary)\r\n" +
+                                    "End Function\r\n";
+                    document.body.appendChild(script);
+                }
+                d.resolve();
+            } else {
+                d.reject();
             }
-            d.resolve();
         }).done(function() { d.reject(); });
         return d.promise();
     };
