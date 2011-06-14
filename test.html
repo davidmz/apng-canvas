@@ -5,10 +5,18 @@
     <script src="apng-canvas.js"></script>
     <script>
         function load() {
-            APNG.init().done(function() {
+            APNG.ready(function() {
                 for (var i = 0; i < document.images.length; i++) {
                     APNG.replaceImage(document.images[i]);
                 }
+            });
+            APNG.checkNativeFeatures(function(b) { console.log(b); });
+            APNG.checkNativeFeatures(function(b) { console.log(b); });
+            APNG.checkNativeFeatures(function(b) { console.log(b); });
+            APNG.checkNativeFeatures(function(b) { console.log(b); });
+
+            APNG.ready(function() {
+                console.log("hi");
             });
         }
     </script>

@@ -3,27 +3,32 @@
 
     self.APNG = {};
 
-    // todo Сделать возможность многократного вызова
-    self.APNG.checkFeatures = function() {
-        var d = new Deferred();
-        var features = {
-            apng:   false,
-            canvas: false
-        };
+    self.APNG.checkNativeFeatures = function(callback) {
+        /* Блок для однократного исполнения метода */
+        var firstCall = !arguments.callee.d;
+        var d = firstCall ? (arguments.callee.d = new Deferred()) : arguments.callee.d;
+        if (callback) d.promise().done(function(res) { callback(res); });
+        if (!firstCall) return d.promise();
+
+        var res = { canvas: false, apng: false };
         var canvas = document.createElement("canvas");
         if (typeof canvas.getContext == "undefined") {
             // canvas is not supported
-            d.resolve(features);
+            d.resolve(res);
         } else {
             // canvas is supported
+            res.canvas = true;
             // see http://eligrey.com/blog/post/apng-feature-detection
-            features.canvas = true;
             var img = new Image();
             img.onload = function() {
                 var ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0);
-                features.apng = (ctx.getImageData(0, 0, 1, 1).data[3] === 0);
-                d.resolve(features);
+                if (ctx.getImageData(0, 0, 1, 1).data[3] === 0 ) {
+                    res.apng = true;
+                    d.resolve(res);
+                } else {
+                    d.resolve(res);
+                }
             };
             // frame 1 (skipped on apng-supporting browsers): [0, 0, 0, 255]
             // frame 2: [0, 0, 0, 0]
@@ -32,32 +37,32 @@
         return d.promise();
     };
 
-    // todo Сделать возможность многократного вызова
-    self.APNG.init = function() {
-        var d = new Deferred();
-        this.checkFeatures().done(function(f) {
-            if (!f.apng && f.canvas) {
-                // Если всё хорошо, то создаём VBScript-функцию для IE9
-                // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
-                if (typeof XMLHttpRequest.prototype.responseBody != "undefined") {
-                    var script = document.createElement("script");
-                    script.setAttribute('type','text/vbscript');
-                    script.text =   "Function IEBinaryToBinStr(Binary)\r\n" +
-                                    "   IEBinaryToBinStr = CStr(Binary)\r\n" +
-                                    "End Function\r\n";
-                    document.body.appendChild(script);
-                }
-                d.resolve();
-            } else {
-                d.reject(f);
+    self.APNG.ready = function(callback) {
+        /* Блок для однократного исполнения метода */
+        var firstCall = !arguments.callee.d;
+        var d = firstCall ? (arguments.callee.d = new Deferred()) : arguments.callee.d;
+        if (callback) d.promise().done(callback);
+        if (!firstCall) return d.promise();
+
+        this.checkNativeFeatures().fail(function() {
+            // Если всё хорошо, то создаём VBScript-функцию для IE9
+            // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
+            if (typeof XMLHttpRequest.prototype.responseBody != "undefined") {
+                var script = document.createElement("script");
+                script.setAttribute('type','text/vbscript');
+                script.text =   "Function IEBinaryToBinStr(Binary)\r\n" +
+                                "   IEBinaryToBinStr = CStr(Binary)\r\n" +
+                                "End Function\r\n";
+                document.body.appendChild(script);
             }
-        });
+            d.resolve();
+        }).done(function() { d.reject(); });
         return d.promise();
     };
 
-    self.APNG.createAPNGCanvas = function(url) {
+    self.APNG.createAPNGCanvas = function(url, callback) {
         var d = new Deferred();
-
+        if (callback) d.promise().done(callback);
         loadBinary(url)
                 .done(function(imageData) {
                     parsePNGData(imageData)
@@ -150,27 +155,30 @@
     if (typeof jQuery != "undefined" && typeof jQuery.Deferred != "undefined") {
         Deferred = jQuery.Deferred;
     } else {
-        // Custom minimal implementation
+        /**
+         * Custom Deferred implementation
+         * @constructor
+         */
         Deferred = function() {
             this.doneList = [];
             this.failList = [];
-            this.isResolved = false;
-            this.isRejected = false;
+            this._isResolved = false;
+            this._isRejected = false;
             this.args = null;
         };
         Deferred.prototype.promise = function() { return this; };
         Deferred.prototype.done = function(callback) {
-            if (this.isResolved) {
+            if (this._isResolved) {
                 callback.apply(this, this.args);
-            } else if (!this.isRejected) {
+            } else if (!this._isRejected) {
                 this.doneList.push(callback);
             }
             return this;
         };
         Deferred.prototype.fail = function(callback) {
-            if (this.isRejected) {
+            if (this._isRejected) {
                 callback.apply(this, this.args);
-            } else if (!this.isResolved) {
+            } else if (!this._isResolved) {
                 this.failList.push(callback);
             }
             return this;
@@ -181,9 +189,11 @@
         Deferred.prototype.always = function(callback) {
             return this.then(callback, callback);
         };
+        Deferred.prototype.isResolved = function() { return this._isResolved; };
+        Deferred.prototype.isRejected = function() { return this._isRejected; };
         Deferred.prototype.resolve = function() {
-            if (!this.isRejected && !this.isResolved) {
-                this.isResolved = true;
+            if (!this._isRejected && !this._isResolved) {
+                this._isResolved = true;
                 this.args = arguments;
                 while (this.doneList.length) this.doneList.shift().apply(this, this.args);
                 this.failList = [];
@@ -191,8 +201,8 @@
             return this;
         };
         Deferred.prototype.reject = function() {
-            if (!this.isRejected && !this.isResolved) {
-                this.isRejected = true;
+            if (!this._isRejected && !this._isResolved) {
+                this._isRejected = true;
                 this.args = arguments;
                 while (this.failList.length) this.failList.shift().apply(this, this.args);
                 this.doneList = [];
