@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>APNG test</title>
+    <script src="apng-canvas.js"></script>
+    <script>
+        function load() {
+            APNG.init().done(function() {
+                for (var i = 0; i < document.images.length; i++) {
+                    APNG.replaceImage(document.images[i]);
+                }
+            });
+        }
+    </script>
+</head>
+<body style="background-color: #eda;" onload="load()">
+<p>
+    APNG images from <a href="http://animatedpng.com/" target="_blank">animatedpng.com</a>
+</p>
+<p>
+    <img src="images/clock.png" width="150" height="150">
+    <img src="images/APNG-Icos4D.png" width="128" height="128">
+    <img src="images/pyani.png" width="200" height="125">
+    <img src="images/APNG-cube.png" width="192" height="192">
+</p>
+<p>
+    Plain old PNG
+</p>
+<p>
+    <img src="images/Firefox_3.5_logo.png" width="110" height="110">
+</p>
+<p>
+    GIF
+</p>
+<p>
+    <img src="images/sound-ico.gif" width="32" height="32">
+</p>
+</body>
+</html>

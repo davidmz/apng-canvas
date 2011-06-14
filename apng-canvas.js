@@ -1,20 +1,11 @@
 (function() {
-    var debug = false;
-    var log = (debug && console.log && console.log.apply) ? function() {
-        var t = new Date().getTime() % 100000;
-        var args = [t];
-        for (var i = 0; i < arguments.length; i++) args[i + 1] = arguments[i];
-        console.log.apply(console, args);
-    } : function() {};
-
-
     /************************* PUBLIC ***************************/
 
     self.APNG = {};
 
+    // todo Сделать возможность многократного вызова
     self.APNG.checkFeatures = function() {
         var d = new Deferred();
-        log("checkFeatures start");
         var features = {
             apng:   false,
             canvas: false
@@ -32,7 +23,6 @@
                 var ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0);
                 features.apng = (ctx.getImageData(0, 0, 1, 1).data[3] === 0);
-                log("checkFeatures done");
                 d.resolve(features);
             };
             // frame 1 (skipped on apng-supporting browsers): [0, 0, 0, 255]
@@ -42,6 +32,7 @@
         return d.promise();
     };
 
+    // todo Сделать возможность многократного вызова
     self.APNG.init = function() {
         var d = new Deferred();
         this.checkFeatures().done(function(f) {
@@ -67,11 +58,8 @@
     self.APNG.createAPNGCanvas = function(url) {
         var d = new Deferred();
 
-        log("loading url: " + url);
         loadBinary(url)
                 .done(function(imageData) {
-                    log("done loading url: " + url);
-                    log("parse start: " + url);
                     parsePNGData(imageData)
                             .done(function(aPng) {
                                 var canvas = document.createElement("canvas");
@@ -91,7 +79,6 @@
                             .fail(function(reason) {
                                 d.reject(reason);
                             });
-                    log("parse stop: " + url);
                 })
                 .fail(function(reason) {
                     d.reject(reason);
@@ -232,14 +219,12 @@
         }
         xhr.onreadystatechange = function(e) {
             if (this.readyState == 4 && this.status == 200) {
-                log("XHR done for url: " + url);
                 if (typeof this.response != "undefined") { // XHR 2
                     var bb = new (self.BlobBuilder || self.WebKitBlobBuilder)();
                     bb.append(this.response);
                     var reader = new FileReader();
                     reader.onload = function() { d.resolve(this.result); };
                     reader.readAsBinaryString(bb.getBlob());
-                    log("start data read for url: " + url);
                 } else {
                     var res = "";
                     if (typeof this.responseBody != "undefined") { // IE
