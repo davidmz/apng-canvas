@@ -1,0 +1,12 @@
+body {
+    background-color:   #eda;
+    margin:             5% 10%;
+    font-family:        Calibri, Arial, sans-serif;
+}
+#message {
+    background-color:   #ffc;
+    color:              #c00;
+    padding:            0.5em;
+    margin-left:        -0.5em;
+    display:            none;
+}

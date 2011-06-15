@@ -1,3 +1,79 @@
+<!DOCTYPE html>
 <html>
-<body>Hi!</body>
+<head>
+    <meta charset="UTF-8">
+    <title>APNG test</title>
+    <link href="style.css" rel="stylesheet">
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+    <script src="https://raw.github.com/davidmz/apng-canvas/master/apng-canvas.js"></script>
+    <script>
+        $(function() {
+            APNG.ready(function() {
+                $("#one img").each(function() { APNG.replaceImage(this); });
+            }).fail(function(message) {
+                $("#message").show().text(message);
+            });
+            $("#one a").click(function() {
+                $("#one").hide().next().show();
+                APNG.ready(function() {
+                    $("img").each(function() { APNG.replaceImage(this); });
+                });
+                return false;
+            });
+        });
+    </script>
+
+</head>
+<body>
+    <h1>apng-canvas test page</h1>
+
+    <p>
+        <a href="https://github.com/davidmz/apng-canvas">Project on GitHub</a>
+    </p>
+
+    <p id="message"></p>
+
+    <div id="one">
+        <p>
+            <img src="images/clock.png" width="150" height="150">
+        </p>
+        <p>
+            <a href="#">Show more images</a>
+        </p>
+    </div>
+    <div style="display: none;">
+    <p>
+        APNG images
+    </p>
+
+    <p>
+        <img src="images/clock.png" width="150" height="150">
+        <img src="images/APNG-Icos4D.png" width="128" height="128">
+        <img src="images/pyani.png" width="200" height="125">
+        <img src="images/APNG-cube.png" width="192" height="192">
+    </p>
+
+    <p>
+        Plain old PNG
+    </p>
+
+    <p>
+        <img src="images/Firefox_3.5_logo.png" width="110" height="110">
+    </p>
+
+    <p>
+        GIF image
+    </p>
+
+    <p>
+        <img src="images/sound-ico.gif" width="32" height="32">
+    </p>
+    </div>
+    <hr>
+    <p style="font-size: smaller;">
+        © 2011 <a href="https://github.com/davidmz">David Mzareulyan</a><br>
+        All APNG images are from <a href="http://animatedpng.com/" target="_blank">animatedpng.com</a>
+    </p>
+</body>
 </html>
