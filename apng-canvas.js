@@ -44,7 +44,7 @@
         if (callback) d.promise().done(callback);
         if (!firstCall) return d.promise();
 
-        if (location.protocol != "http" && location.protocol != "https") {
+        if (location.protocol != "http:" && location.protocol != "https:") {
             d.reject("apng-canvas doesn't work on pages loaded by '" + location.protocol + "' protocol");
             return d.promise();
         }
