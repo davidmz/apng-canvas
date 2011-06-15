@@ -44,6 +44,11 @@
         if (callback) d.promise().done(callback);
         if (!firstCall) return d.promise();
 
+        if (location.protocol != "http" && location.protocol != "https") {
+            d.reject("apng-canvas doesn't work on pages loaded by '" + location.protocol + "' protocol");
+            return d.promise();
+        }
+
         this.checkNativeFeatures().done(function(f) {
             if (f.canvas && !f.apng) {
                 // Если всё хорошо, то создаём VBScript-функцию для IE9
@@ -58,7 +63,8 @@
                 }
                 d.resolve();
             } else {
-                d.reject();
+                if (!f.canvas) d.reject("Browser doesn't support canvas");
+                if (f.apng) d.reject("Browser has native APNG support");
             }
         }).done(function() { d.reject(); });
         return d.promise();
