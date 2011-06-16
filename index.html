@@ -9,14 +9,14 @@
     <script src="https://raw.github.com/davidmz/apng-canvas/master/apng-canvas.min.js"></script>
     <script>
         $(function() {
-            APNG.ready(function() {
+            APNG.ifNeeded(function() {
                 $("#one img").each(function() { APNG.replaceImage(this); });
             }).fail(function(message) {
-                $("#message").show().text(message);
+                $("#message").show().text("apng-canvas not needed: " + message);
             });
             $("#one a").click(function() {
                 $("#one").hide().next().show();
-                APNG.ready(function() {
+                APNG.ifNeeded(function() {
                     $("img").each(function() { APNG.replaceImage(this); });
                 });
                 return false;
