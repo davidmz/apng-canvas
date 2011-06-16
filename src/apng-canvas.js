@@ -13,11 +13,11 @@
 
     var APNG = global.APNG = {};
 
+    var featuresD = null;
     APNG.checkNativeFeatures = function(callback) {
-        /* Блок для однократного исполнения метода */
-        var firstCall = !arguments.callee.d;
-        var d = firstCall ? (arguments.callee.d = new Deferred()) : arguments.callee.d;
-        if (callback) d.promise().done(function(res) { callback(res); });
+        var firstCall = !featuresD;
+        var d = firstCall ? (featuresD = new Deferred()) : featuresD;
+        if (callback) d.promise().done(callback);
         if (!firstCall) return d.promise();
 
         var res = { canvas: false, apng: false };
@@ -47,10 +47,10 @@
         return d.promise();
     };
 
-    APNG.ready = function(callback) {
-        /* Блок для однократного исполнения метода */
-        var firstCall = !arguments.callee.d;
-        var d = firstCall ? (arguments.callee.d = new Deferred()) : arguments.callee.d;
+    var neededD = null;
+    APNG.ifNeeded = function(callback) {
+        var firstCall = !neededD;
+        var d = firstCall ? (neededD = new Deferred()) : neededD;
         if (callback) d.promise().done(callback);
         if (!firstCall) return d.promise();
 
@@ -61,16 +61,6 @@
 
         this.checkNativeFeatures().done(function(f) {
             if (f.canvas && !f.apng) {
-                // Если всё хорошо, то создаём VBScript-функцию для IE9
-                // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
-                if (typeof XMLHttpRequest.prototype.responseBody != "undefined") {
-                    var script = document.createElement("script");
-                    script.setAttribute('type','text/vbscript');
-                    script.text =   "Function IEBinaryToBinStr(Binary)\r\n" +
-                                    "   IEBinaryToBinStr = CStr(Binary)\r\n" +
-                                    "End Function\r\n";
-                    document.body.appendChild(script);
-                }
                 d.resolve();
             } else {
                 if (!f.canvas) d.reject("Browser doesn't support canvas");
@@ -165,6 +155,22 @@
 
     /************************* INTERNALS ***************************/
 
+    if (
+            typeof XMLHttpRequest.prototype.responseBody != 'undefined'
+            && typeof document.addEventListener != 'undefined'
+    ) {
+        // создаём VBScript-функцию для IE9
+        // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
+        document.addEventListener("DOMContentLoaded", function() {
+            var script = document.createElement("script");
+            script.setAttribute('type','text/vbscript');
+            script.text =   "Function APNGIEBinaryToBinStr(Binary)\r\n" +
+                            "   APNGIEBinaryToBinStr = CStr(Binary)\r\n" +
+                            "End Function\r\n";
+            document.body.appendChild(script);
+        });
+    }
+
     /**
      * Загрузка двоичных данных как строки с символами \x00 - \xff
      * @param url
@@ -182,7 +188,7 @@
         xhr.onreadystatechange = function(e) {
             if (this.readyState == 4 && this.status == 200) {
                 if (typeof this.response != "undefined") { // XHR 2
-                    var bb = new (self.BlobBuilder || self.WebKitBlobBuilder)();
+                    var bb = new (global.BlobBuilder || global.WebKitBlobBuilder)();
                     bb.append(this.response);
                     var reader = new FileReader();
                     reader.onload = function() { d.resolve(this.result); };
@@ -191,7 +197,7 @@
                     var res = "";
                     if (typeof this.responseBody != "undefined") { // IE
                         // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
-                        var raw = IEBinaryToBinStr(this.responseBody);
+                        var raw = APNGIEBinaryToBinStr(this.responseBody);
                         for (var j = 0, l = raw.length; j < l; j++) {
                             var c = raw.charCodeAt(j);
                             res += String.fromCharCode(c & 0xFF, (c >> 8) & 0xFF);
@@ -255,8 +261,8 @@
                     frame.height    = readDWord(data.substr(8, 4));
                     frame.left      = readDWord(data.substr(12, 4));
                     frame.top       = readDWord(data.substr(16, 4));
-                    var delayN    = readWord(data.substr(20, 2));
-                    var delayD    = readWord(data.substr(22, 2));
+                    var delayN      = readWord(data.substr(20, 2));
+                    var delayD      = readWord(data.substr(22, 2));
                     if (delayD == 0) delayD = 100;
                     frame.delay = 1000 * delayN / delayD;
                     frame.disposeOp = data.charCodeAt(24);
