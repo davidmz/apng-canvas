@@ -1,9 +1,19 @@
+/**
+ * Copyright (c) 2011 David Mzareulyan
+ *
+ * apng-canvas
+ *
+ * Project page: https://github.com/davidmz/apng-canvas
+ *
+ */
 (function() {
     /************************* PUBLIC ***************************/
 
-    self.APNG = {};
+    var global = (function(){ return this; })();
 
-    self.APNG.checkNativeFeatures = function(callback) {
+    var APNG = global.APNG = {};
+
+    APNG.checkNativeFeatures = function(callback) {
         /* Блок для однократного исполнения метода */
         var firstCall = !arguments.callee.d;
         var d = firstCall ? (arguments.callee.d = new Deferred()) : arguments.callee.d;
@@ -37,7 +47,7 @@
         return d.promise();
     };
 
-    self.APNG.ready = function(callback) {
+    APNG.ready = function(callback) {
         /* Блок для однократного исполнения метода */
         var firstCall = !arguments.callee.d;
         var d = firstCall ? (arguments.callee.d = new Deferred()) : arguments.callee.d;
@@ -70,7 +80,7 @@
         return d.promise();
     };
 
-    self.APNG.createAPNGCanvas = function(url, callback) {
+    APNG.createAPNGCanvas = function(url, callback) {
         var d = new Deferred();
         if (callback) d.promise().done(callback);
         loadBinary(url)
@@ -102,7 +112,7 @@
         return d.promise();
     };
 
-    self.APNG.replaceImage = function(img) {
+    APNG.replaceImage = function(img) {
         return APNG.createAPNGCanvas(img.src).done(function(canvas) {
             img.parentNode.insertBefore(canvas, img);
             img.parentNode.removeChild(img);
@@ -112,21 +122,6 @@
     /************************* HELPERS ***************************/
 
     var PNG_SIGNATURE = "\x89PNG\x0d\x0a\x1a\x0a";
-
-    var crc32table = new Array(256);
-    (function() {
-        for(var i=0; i<256; i++) {
-            var c=i;
-            for (var k=0; k<8; k++) c = (c&1) ? 0xEDB88320 ^ (c>>>1) : c>>>1;
-            crc32table[i] = c;
-        }
-    })();
-    var crc32 = function(str) {
-        var crc = -1;
-        for( var i = 0, l = str.length; i < l; i++ )
-            crc = ( crc >>> 8 ) ^ crc32table[( crc ^ str.charCodeAt( i ) ) & 0xFF];
-        return crc ^ (-1);
-    };
 
     var readDWord = function(data) {
         var x = 0;
@@ -167,66 +162,6 @@
     DataBuilder.prototype.getUrl = function(contentType) {
         return "data:" + contentType + "," + escape(this.parts.join(""));
     };
-
-    var Deferred;
-    if (typeof jQuery != "undefined" && typeof jQuery.Deferred != "undefined") {
-        Deferred = jQuery.Deferred;
-    } else {
-        /**
-         * Custom Deferred implementation
-         * @constructor
-         */
-        Deferred = function() {
-            this.doneList = [];
-            this.failList = [];
-            this._isResolved = false;
-            this._isRejected = false;
-            this.args = null;
-        };
-        Deferred.prototype.promise = function() { return this; };
-        Deferred.prototype.done = function(callback) {
-            if (this._isResolved) {
-                callback.apply(this, this.args);
-            } else if (!this._isRejected) {
-                this.doneList.push(callback);
-            }
-            return this;
-        };
-        Deferred.prototype.fail = function(callback) {
-            if (this._isRejected) {
-                callback.apply(this, this.args);
-            } else if (!this._isResolved) {
-                this.failList.push(callback);
-            }
-            return this;
-        };
-        Deferred.prototype.then = function(callbackDone, callbackFail) {
-            return this.done(callbackDone).fail(callbackFail);
-        };
-        Deferred.prototype.always = function(callback) {
-            return this.then(callback, callback);
-        };
-        Deferred.prototype.isResolved = function() { return this._isResolved; };
-        Deferred.prototype.isRejected = function() { return this._isRejected; };
-        Deferred.prototype.resolve = function() {
-            if (!this._isRejected && !this._isResolved) {
-                this._isResolved = true;
-                this.args = arguments;
-                while (this.doneList.length) this.doneList.shift().apply(this, this.args);
-                this.failList = [];
-            }
-            return this;
-        };
-        Deferred.prototype.reject = function() {
-            if (!this._isRejected && !this._isResolved) {
-                this._isRejected = true;
-                this.args = arguments;
-                while (this.failList.length) this.failList.shift().apply(this, this.args);
-                this.doneList = [];
-            }
-            return this;
-        };
-    }
 
     /************************* INTERNALS ***************************/
 
