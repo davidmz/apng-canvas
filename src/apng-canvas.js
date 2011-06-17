@@ -163,7 +163,11 @@
         this.parts.push(data);
     };
     DataBuilder.prototype.getUrl = function(contentType) {
-        return "data:" + contentType + ";base64," + btoa(this.parts.join(""));
+        if (global.btoa) {
+            return "data:" + contentType + ";base64," + btoa(this.parts.join(""));
+        } else { // IE
+            return "data:" + contentType + "," + escape(this.parts.join(""));
+        }
     };
 
     /************************* INTERNALS ***************************/
