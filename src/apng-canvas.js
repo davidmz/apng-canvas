@@ -179,23 +179,32 @@
         var d = new Deferred();
 
         var xhr = new XMLHttpRequest();
+
+        var BlobBuilder = (global.BlobBuilder || global.WebKitBlobBuilder);
+        // IE9
+        var useResponseBody = (typeof this.responseBody != "undefined");
+        // Chrome
+        var useResponseType = (typeof this.responseType != "undefined" && typeof BlobBuilder != "undefined");
+        // Safari
+        var useXUserDefined = (typeof xhr.overrideMimeType != "undefined" && !useResponseType);
+
         xhr.open('GET', url, true);
-        if (typeof xhr.responseType != "undefined") { // chrome
+        if (useResponseType) { // chrome
             xhr.responseType = "arraybuffer";
-        } else if (typeof xhr.overrideMimeType != "undefined") { // FF?
+        } else if (useXUserDefined) { // FF & old Safari
             xhr.overrideMimeType('text/plain; charset=x-user-defined');
         }
         xhr.onreadystatechange = function(e) {
             if (this.readyState == 4 && this.status == 200) {
-                if (typeof this.response != "undefined") { // XHR 2
-                    var bb = new (global.BlobBuilder || global.WebKitBlobBuilder)();
+                if (useResponseType) { // XHR 2
+                    var bb = new BlobBuilder();
                     bb.append(this.response);
                     var reader = new FileReader();
                     reader.onload = function() { d.resolve(this.result); };
                     reader.readAsBinaryString(bb.getBlob());
                 } else {
                     var res = "";
-                    if (typeof this.responseBody != "undefined") { // IE
+                    if (useResponseBody) { // IE
                         // see http://miskun.com/javascript/internet-explorer-and-binary-files-data-access/
                         var raw = APNGIEBinaryToBinStr(this.responseBody);
                         for (var j = 0, l = raw.length; j < l; j++) {
