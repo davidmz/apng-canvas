@@ -1,10 +1,11 @@
 /**
- * Copyright (c) 2011 David Mzareulyan
+ * @preserve
+ * APNG-canvas
  *
- * apng-canvas
- *
- * Project page: https://github.com/davidmz/apng-canvas
- *
+ * @author David Mzareulyan
+ * @copyright 2011 David Mzareulyan
+ * @link https://github.com/davidmz/apng-canvas
+ * @license https://github.com/davidmz/apng-canvas/blob/master/LICENSE (MIT License)
  */
 (function() {
     /************************* PUBLIC ***************************/
@@ -24,9 +25,11 @@
         var canvas = document.createElement("canvas");
         if (typeof canvas.getContext == "undefined") {
             // canvas is not supported
+            log.log("Feature: canvas is NOT supported", L.LOG_INFO);
             d.resolve(res);
         } else {
             // canvas is supported
+            log.log("Feature: canvas is supported", L.LOG_INFO);
             res.canvas = true;
             // see http://eligrey.com/blog/post/apng-feature-detection
             var img = new Image();
@@ -35,8 +38,10 @@
                 ctx.drawImage(img, 0, 0);
                 if (ctx.getImageData(0, 0, 1, 1).data[3] === 0 ) {
                     res.apng = true;
+                    log.log("Feature: native APNG is supported", L.LOG_INFO);
                     d.resolve(res);
                 } else {
+                    log.log("Feature: native APNG is NOT supported", L.LOG_INFO);
                     d.resolve(res);
                 }
             };
@@ -109,6 +114,13 @@
         });
     };
 
+    var L = ULogger;
+    var log = new L();
+    APNG.onLog = function(callback, minLevel) {
+        if (!minLevel == "undefined") minLevel = L.LOG_INFO;
+        log.addListener(callback, minLevel);
+    };
+
     /************************* HELPERS ***************************/
 
     // "\x89PNG\x0d\x0a\x1a\x0a"
@@ -151,7 +163,7 @@
         this.parts.push(data);
     };
     DataBuilder.prototype.getUrl = function(contentType) {
-        return "data:" + contentType + "," + escape(this.parts.join(""));
+        return "data:" + contentType + ";base64," + btoa(this.parts.join(""));
     };
 
     /************************* INTERNALS ***************************/
@@ -179,6 +191,8 @@
     var loadBinary = function(url) {
         var d = new Deferred();
 
+        log.log("Starting load url: " + url, L.LOG_INFO);
+
         var xhr = new XMLHttpRequest();
 
         var BlobBuilder = (global.BlobBuilder || global.WebKitBlobBuilder);
@@ -189,6 +203,10 @@
         // Safari
         var useXUserDefined = (typeof xhr.overrideMimeType != "undefined" && !useResponseType);
 
+        log.log("useResponseBody: " + (useResponseBody ? 1 : 0), L.LOG_DEBUG2);
+        log.log("useResponseType: " + (useResponseType ? 1 : 0), L.LOG_DEBUG2);
+        log.log("useXUserDefined: " + (useXUserDefined ? 1 : 0), L.LOG_DEBUG2);
+
         xhr.open('GET', url, true);
         if (useResponseType) { // chrome
             xhr.responseType = "arraybuffer";
@@ -197,6 +215,7 @@
         }
         xhr.onreadystatechange = function(e) {
             if (this.readyState == 4 && this.status == 200) {
+                log.log("Done load url: " + url, L.LOG_INFO);
                 if (useResponseType) { // XHR 2
                     var bb = new BlobBuilder();
                     bb.append(this.response);
@@ -220,6 +239,7 @@
                     d.resolve(res);
                 }
             } else if (this.readyState == 4) {
+                log.log("Fail load url: " + url, L.LOG_ERROR);
                 d.reject(xhr);
             }
         };
@@ -231,7 +251,10 @@
     var parsePNGData = function(imageData) {
         var d = new Deferred();
 
+        log.log("Start data parsing: " + escape(imageData.substr(0, 8)) + "...", L.LOG_INFO);
+
         if (imageData.substr(0, 8) != PNG_SIGNATURE) {
+            log.log("Invalid PNG file signature: " + escape(imageData.substr(0, 8)) + "...", L.LOG_ERROR);
             d.reject("Invalid PNG file signature");
             return d.promise();
         }
@@ -252,16 +275,20 @@
             var type = imageData.substr(off + 4, 4);
             var data;
 
+            log.log("Found chunk: " + type, L.LOG_DEBUG2);
+
             switch (type) {
                 case "IHDR":
                     data = imageData.substr(off + 8, length);
                     headerData = data;
                     aPng.width = readDWord(data.substr(0, 4));
                     aPng.height = readDWord(data.substr(4, 4));
+                    log.log("Image has size " + aPng.width + "x" + aPng.height, L.LOG_DEBUG);
                     break;
                 case "acTL":
                     aPng.isAnimated = true;
                     aPng.numPlays = readDWord(imageData.substr(off + 8 + 4, 4));
+                    log.log("Image is animated", L.LOG_DEBUG);
                     break;
                 case "fcTL":
                     if (frame) aPng.frames.push(frame);
@@ -295,10 +322,13 @@
         } while(type != "IEND" && off < imageData.length);
         if (frame) aPng.frames.push(frame);
 
+        log.log("Found " + aPng.frames.length + " frames", L.LOG_DEBUG);
+
         // Вариант неанимированного PNG
         if (!aPng.isAnimated) d.resolve(aPng);
 
         // Собираем кадры
+        log.log("Start making frames", L.LOG_INFO);
         var loadedImages = 0;
         for (var i = 0; i < aPng.frames.length; i++) {
             var img = new Image();
@@ -306,9 +336,13 @@
             frame.img = img;
             img.onload = function() {
                 loadedImages++;
+                log.log("Image created (" + loadedImages + ")", L.LOG_DEBUG2);
                 if (loadedImages == aPng.frames.length) d.resolve(aPng);
             };
-            img.onerror = function() { d.reject("Image creation error"); };
+            img.onerror = function() {
+                log.log("Image creation error", L.LOG_ERROR);
+                d.reject("Image creation error");
+            };
 
             var db = new DataBuilder();
             db.append(PNG_SIGNATURE);
@@ -319,7 +353,9 @@
                 db.append(writeChunk("IDAT", frame.dataParts[j]));
             }
             db.append(postData);
-            img.src = db.getUrl("image/png");
+            var url = db.getUrl("image/png");
+            log.log("Image url: " + url.substr(0, 64) + "...", L.LOG_DEBUG2);
+            img.src = url;
             delete frame.dataParts;
         }
         return d.promise();

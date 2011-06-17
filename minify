@@ -1,5 +1,5 @@
 #!/bin/sh
 
-java -jar "C:/soft/!UTILS/ClosureCompiler/compiler.jar" --charset=utf8 --js=src/udeferred.js --js=src/crc32.js --js=src/apng-canvas.js --js_output_file=apng-canvas.min.js
+java -jar "C:/soft/!UTILS/ClosureCompiler/compiler.jar" --charset=utf8 --formatting PRINT_INPUT_DELIMITER --js=src/udeferred.js --js=src/crc32.js --js=src/ulogger.js --js=src/apng-canvas.js --js_output_file=apng-canvas.min.js
 
 git add apng-canvas.min.js
