@@ -103,7 +103,6 @@
     };
 
     APNG.replaceImage = function(img) {
-        console.log(img.src, img.complete, img.readyState)
         return APNG.createAPNGCanvas(img.src).done(function(canvas) {
             img.parentNode.insertBefore(canvas, img);
             img.parentNode.removeChild(img);
