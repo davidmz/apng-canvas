@@ -183,9 +183,9 @@
 
         var BlobBuilder = (global.BlobBuilder || global.WebKitBlobBuilder);
         // IE9
-        var useResponseBody = (typeof this.responseBody != "undefined");
+        var useResponseBody = (typeof xhr.responseBody != "undefined");
         // Chrome
-        var useResponseType = (typeof this.responseType != "undefined" && typeof BlobBuilder != "undefined");
+        var useResponseType = (typeof xhr.responseType != "undefined" && typeof BlobBuilder != "undefined");
         // Safari
         var useXUserDefined = (typeof xhr.overrideMimeType != "undefined" && !useResponseType);
 
