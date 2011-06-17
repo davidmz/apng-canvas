@@ -103,6 +103,7 @@
     };
 
     APNG.replaceImage = function(img) {
+        console.log(img.src, img.complete, img.readyState)
         return APNG.createAPNGCanvas(img.src).done(function(canvas) {
             img.parentNode.insertBefore(canvas, img);
             img.parentNode.removeChild(img);
@@ -111,7 +112,8 @@
 
     /************************* HELPERS ***************************/
 
-    var PNG_SIGNATURE = "\x89PNG\x0d\x0a\x1a\x0a";
+    // "\x89PNG\x0d\x0a\x1a\x0a"
+    var PNG_SIGNATURE = String.fromCharCode(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
 
     var readDWord = function(data) {
         var x = 0;
