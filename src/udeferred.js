@@ -1,8 +1,10 @@
 /**
- * Copyright (c) 2011 David Mzareulyan
+ * @preserve
+ * uDeferred library
  *
- * μDeferred library
- * 
+ * @author David Mzareulyan
+ * @copyright 2011 David Mzareulyan
+ * @license http://creativecommons.org/licenses/by/3.0/
  */
 (function() {
 

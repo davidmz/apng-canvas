@@ -1,3 +1,11 @@
+/**
+ * @preserve
+ * CRC32
+ *
+ * @author David Mzareulyan
+ * @copyright 2011 David Mzareulyan
+ * @license http://creativecommons.org/licenses/by/3.0/
+ */
 (function() {
     var
             global = (function(){ return this; })(),
