@@ -5,6 +5,8 @@ APNG-canvas
 
 Работающие примеры: http://davidmz.github.com/apng-canvas/ (общий вес изображений — около 3 Мб)
 
+Обсуждение в ЖЖ: http://david-m.livejournal.com/tag/apng-canvas
+
 API
 -----------
 
