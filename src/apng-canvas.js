@@ -11,6 +11,7 @@
     /************************* PUBLIC ***************************/
 
     var global = (function(){ return this; })();
+    var $ = global.jQuery || null;
 
     var APNG = global.APNG = {};
 
@@ -94,8 +95,29 @@
 
     APNG.replaceImage = function(img) {
         return APNG.createAPNGCanvas(img.src).done(function(canvas) {
-            img.parentNode.insertBefore(canvas, img);
-            img.parentNode.removeChild(img);
+            for (var i = 0; i < img.attributes.length; i++) {
+                var attr = img.attributes[i];
+                if (["alt","src","usemap","ismap"].indexOf(attr.nodeName) == -1) {
+                    canvas.setAttributeNode(attr.cloneNode());
+                }
+            }
+            /**
+             * Если в системе есть jQuery, копируем привязанные обработчики событий
+             */
+            if ($) {
+                var events = $(img).data("events");
+                if (events) {
+                    for ( var type in events ) {
+                        for ( var j = 0, l = events[type].length; j < l; j++ ) {
+                            var h = events[type][j];
+                            $(canvas).bind(type + (h.namespace ? "." : "") + h.namespace, h.data, h.handler);
+                        }
+                    }
+                }
+            }
+            var p = img.parentNode;
+            p.insertBefore(canvas, img);
+            p.removeChild(img);
         });
     };
 
