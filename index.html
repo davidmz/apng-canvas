@@ -10,6 +10,12 @@
     <script src="apng-canvas.min.js"></script>
     <script>
         $(function() {
+
+            // test for event listeners copying
+            $("#one img:first").click(function() {
+                alert("Click on image #1!")
+            });
+
             APNG.ifNeeded(function() {
                 $("#one img").each(function() { APNG.replaceImage(this); });
             }).fail(function(message) {
@@ -37,7 +43,10 @@
 
     <div id="one">
         <p>
+            <img src="images/clock.png" width="150" height="150" style="cursor: pointer">
             <img src="images/clock.png" width="150" height="150">
+            <img src="images/clock.png" width="150" height="150">
+            <img src="images/clock.png" width="150" height="150" style="cursor: pointer" onclick="alert('Click on image #4!')">
         </p>
         <p>
             <a href="#">Show more images</a>
