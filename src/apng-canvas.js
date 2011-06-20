@@ -195,19 +195,29 @@
      */
     var allAnimations = [], urlToAnimation = {};
 
+    // requestAnimationFrame over setTimeout
+    var rafList = [];
+    (function() {
+        if (rafList.length) {
+            var list = rafList.splice(0, rafList.length), t = new Date().getTime();
+            while (list.length) list.shift().call(null, t);
+        }
+        setTimeout(arguments.callee, 1000 / 60);
+    })();
+
     var requestAnimationFrame = global.requestAnimationFrame || global.webkitRequestAnimationFrame ||
 	    global.mozRequestAnimationFrame || global.oRequestAnimationFrame ||
-        function(callback) { setTimeout(callback, 1000 / 60); };
+        function(callback) { rafList.push(callback); };
 
     // Main animation loop
-    (function() {
-        var t = new Date().getTime();
+    var tick = function(t) {
         for (var i = 0; i < allAnimations.length; i++) {
             var anim = allAnimations[i];
             while (anim.isActive && anim.nextRenderTime <= t) anim.renderFrame(t);
         }
-        requestAnimationFrame(arguments.callee);
-    })();
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
 
     var Animation = function() {
         this.isActive = false;
@@ -319,8 +329,11 @@
             canvas.height = this.height;
             var ctx = canvas.getContext("2d");
             contexts.push(ctx);
-            if (contexts.length > 1)
-                ctx.putImageData(contexts[0].getImageData(0, 0, this.width, this.height), 0, 0);
+            if (contexts.length > 1) {
+                requestAnimationFrame(function() {
+                    ctx.putImageData(contexts[0].getImageData(0, 0, canvas.width, canvas.height), 0, 0);
+                });
+            }
             this.isActive = true;
             return canvas;
         };
