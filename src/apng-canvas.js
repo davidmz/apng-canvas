@@ -25,11 +25,9 @@
         var canvas = document.createElement("canvas");
         if (typeof canvas.getContext == "undefined") {
             // canvas is not supported
-            log.log("Feature: canvas is NOT supported", L.LOG_INFO);
             d.resolve(res);
         } else {
             // canvas is supported
-            log.log("Feature: canvas is supported", L.LOG_INFO);
             res.canvas = true;
             // see http://eligrey.com/blog/post/apng-feature-detection
             var img = new Image();
@@ -38,10 +36,8 @@
                 ctx.drawImage(img, 0, 0);
                 if (ctx.getImageData(0, 0, 1, 1).data[3] === 0 ) {
                     res.apng = true;
-                    log.log("Feature: native APNG is supported", L.LOG_INFO);
                     d.resolve(res);
                 } else {
-                    log.log("Feature: native APNG is NOT supported", L.LOG_INFO);
                     d.resolve(res);
                 }
             };
@@ -78,31 +74,20 @@
     APNG.createAPNGCanvas = function(url, callback) {
         var d = new Deferred();
         if (callback) d.promise().done(callback);
-        loadBinary(url)
-                .done(function(imageData) {
-                    parsePNGData(imageData)
-                            .done(function(aPng) {
-                                var canvas = document.createElement("canvas");
-                                canvas.width = aPng.width;
-                                canvas.height = aPng.height;
-                                if (aPng.isAnimated) {
-                                    animate(aPng, canvas);
-                                } else {
-                                    var img = new Image();
-                                    img.onload = function() { canvas.getContext('2d').drawImage(img, 0, 0); };
-                                    var db = new DataBuilder();
-                                    db.append(imageData);
-                                    img.src = db.getUrl("image/png");
-                                }
-                                d.resolve(canvas);
-                            })
-                            .fail(function(reason) {
-                                d.reject(reason);
-                            });
-                })
-                .fail(function(reason) {
-                    d.reject(reason);
-                });
+
+        var a;
+        if (url in urlToAnimation) {
+            a = urlToAnimation[url];
+        } else {
+            a = new Animation();
+            urlToAnimation[url] = a;
+            allAnimations.push(a);
+            Deferred.pipeline(url) ( loadBinaryData, proxy(a.parsePNGData, a));
+        }
+        a.whenReady().done(function() {
+            var canvas = a.addCanvas();
+            d.resolve(canvas);
+        }).fail(proxy(d.reject, d));
 
         return d.promise();
     };
@@ -112,13 +97,6 @@
             img.parentNode.insertBefore(canvas, img);
             img.parentNode.removeChild(img);
         });
-    };
-
-    var L = ULogger;
-    var log = new L();
-    APNG.onLog = function(callback, minLevel) {
-        if (!minLevel == "undefined") minLevel = L.LOG_INFO;
-        log.addListener(callback, minLevel);
     };
 
     /************************* HELPERS ***************************/
@@ -170,6 +148,8 @@
         }
     };
 
+    var proxy = function(method, context) { return function() { return method.apply(context, arguments); }; };
+
     /************************* INTERNALS ***************************/
 
     if (
@@ -189,13 +169,186 @@
     }
 
     /**
+     * hash url -> animation
+     */
+    var allAnimations = [], urlToAnimation = {};
+
+    var requestAnimationFrame = global.requestAnimationFrame || global.webkitRequestAnimationFrame ||
+	    global.mozRequestAnimationFrame || global.oRequestAnimationFrame ||
+        function(callback) { setTimeout(callback, 1000 / 60); };
+
+    // Main animation loop
+    (function() {
+        var t = new Date().getTime();
+        for (var i = 0; i < allAnimations.length; i++) {
+            var anim = allAnimations[i];
+            while (anim.isActive && anim.nextRenderTime <= t) anim.renderFrame(t);
+        }
+        requestAnimationFrame(arguments.callee);
+    })();
+
+    var Animation = function() {
+        this.isActive = false;
+        this.nextRenderTime = 0;
+
+        this.width  = 0;
+        this.height = 0;
+        this.numPlays   = 0;
+        this.frames     = [];
+        this.playTime   = 0; // продолжительность одного цикла анимации
+
+        var d = new Deferred();
+        this.whenReady = proxy(d.promise, d);
+
+        this.parsePNGData = function(imageData) {
+            if (imageData.substr(0, 8) != PNG_SIGNATURE) {
+                d.reject("Invalid PNG file signature");
+                return d.promise();
+            }
+
+            var headerData, preData = "", postData = "", isAnimated = false;
+
+            var off = 8, frame = null;
+            do {
+                var length = readDWord(imageData.substr(off, 4));
+                var type = imageData.substr(off + 4, 4);
+                var data;
+
+                switch (type) {
+                    case "IHDR":
+                        data = imageData.substr(off + 8, length);
+                        headerData = data;
+                        this.width = readDWord(data.substr(0, 4));
+                        this.height = readDWord(data.substr(4, 4));
+                        break;
+                    case "acTL":
+                        isAnimated = true;
+                        this.numPlays = readDWord(imageData.substr(off + 8 + 4, 4));
+                        break;
+                    case "fcTL":
+                        if (frame) this.frames.push(frame);
+                        data = imageData.substr(off + 8, length);
+                        frame = {};
+                        frame.width     = readDWord(data.substr(4, 4));
+                        frame.height    = readDWord(data.substr(8, 4));
+                        frame.left      = readDWord(data.substr(12, 4));
+                        frame.top       = readDWord(data.substr(16, 4));
+                        var delayN      = readWord(data.substr(20, 2));
+                        var delayD      = readWord(data.substr(22, 2));
+                        if (delayD == 0) delayD = 100;
+                        frame.delay = 1000 * delayN / delayD;
+                        this.playTime += frame.delay;
+                        frame.disposeOp = data.charCodeAt(24);
+                        frame.blendOp   = data.charCodeAt(25);
+                        frame.dataParts = [];
+                        break;
+                    case "fdAT":
+                        if (frame) frame.dataParts.push(imageData.substr(off + 8 + 4, length - 4));
+                        break;
+                    case "IDAT":
+                        if (frame) frame.dataParts.push(imageData.substr(off + 8, length));
+                        break;
+                    case "IEND":
+                        postData = imageData.substr(off, length + 12);
+                        break;
+                    default:
+                        preData += imageData.substr(off, length + 12);
+                }
+                off += 12 + length;
+            } while(type != "IEND" && off < imageData.length);
+            if (frame) this.frames.push(frame);
+
+            // Вариант неанимированного PNG
+            if (!isAnimated) {
+                d.reject("Non-animated PNG");
+                return d.promise();
+            }
+
+            // Собираем кадры
+            var loadedImages = 0, self = this;
+            for (var i = 0; i < this.frames.length; i++) {
+                var img = new Image();
+                frame = this.frames[i];
+                frame.img = img;
+                img.onload = function() {
+                    loadedImages++;
+                    if (loadedImages == self.frames.length) d.resolve(this);
+                };
+                img.onerror = function() { d.reject("Image creation error"); };
+
+                var db = new DataBuilder();
+                db.append(PNG_SIGNATURE);
+                headerData = writeDWord(frame.width) + writeDWord(frame.height) + headerData.substr(8);
+                db.append(writeChunk("IHDR", headerData));
+                db.append(preData);
+                for (var j = 0; j < frame.dataParts.length; j++)
+                    db.append(writeChunk("IDAT", frame.dataParts[j]));
+                db.append(postData);
+                img.src = db.getUrl("image/png");
+                delete frame.dataParts;
+            }
+            return d.promise();
+        };
+
+        var contexts = [];
+        this.addCanvas = function() {
+            var canvas = document.createElement("canvas");
+            canvas.width = this.width;
+            canvas.height = this.height;
+            var ctx = canvas.getContext("2d");
+            contexts.push(ctx);
+            if (contexts.length > 1)
+                ctx.putImageData(contexts[0].getImageData(0, 0, this.width, this.height), 0, 0);
+            this.isActive = true;
+            return canvas;
+        };
+
+        var fNum = 0;
+        var prevF = null;
+        var eachCanvas = function(method, args) {
+            for (var i = 0; i < contexts.length; i++) contexts[i][method].apply(contexts[i], args);
+        };
+
+        this.renderFrame = function(now) {
+            if (contexts.length == 0) return;
+            var f = fNum++ % this.frames.length;
+            var frame = this.frames[f];
+
+            if (f == 0) {
+                eachCanvas("clearRect", [0, 0, this.width, this.height]);
+                prevF = null;
+                if (frame.disposeOp == 2) frame.disposeOp = 1;
+            }
+
+            if (prevF && prevF.disposeOp == 1) {
+                eachCanvas("clearRect", [prevF.left, prevF.top, prevF.width, prevF.height]);
+            } else if (prevF && prevF.disposeOp == 2) {
+                eachCanvas("putImageData", [prevF.iData, prevF.left, prevF.top]);
+            }
+            prevF = frame;
+            prevF.iData = null;
+            if (prevF.disposeOp == 2) {
+                prevF.iData = contexts[0].getImageData(frame.left, frame.top, frame.width, frame.height);
+            }
+            if (frame.blendOp == 0) eachCanvas("clearRect", [frame.left, frame.top, frame.width, frame.height]);
+            eachCanvas("drawImage", [frame.img, frame.left, frame.top]);
+
+            if (this.numPlays == 0 || fNum / this.frames.length < this.numPlays) {
+                if (this.nextRenderTime == 0) this.nextRenderTime = now;
+                while (now > this.nextRenderTime + this.playTime) this.nextRenderTime += this.playTime;
+                this.nextRenderTime += frame.delay;
+            } else {
+                this.isActive = false;
+            }
+        };
+    };
+
+    /**
      * Загрузка двоичных данных как строки с символами \x00 - \xff
      * @param url
      */
-    var loadBinary = function(url) {
+    var loadBinaryData = function(url) {
         var d = new Deferred();
-
-        log.log("Starting load url: " + url, L.LOG_INFO);
 
         var xhr = new XMLHttpRequest();
 
@@ -207,10 +360,6 @@
         // Safari
         var useXUserDefined = (typeof xhr.overrideMimeType != "undefined" && !useResponseType);
 
-        log.log("useResponseBody: " + (useResponseBody ? 1 : 0), L.LOG_DEBUG2);
-        log.log("useResponseType: " + (useResponseType ? 1 : 0), L.LOG_DEBUG2);
-        log.log("useXUserDefined: " + (useXUserDefined ? 1 : 0), L.LOG_DEBUG2);
-
         xhr.open('GET', url, true);
         if (useResponseType) { // chrome
             xhr.responseType = "arraybuffer";
@@ -219,7 +368,6 @@
         }
         xhr.onreadystatechange = function(e) {
             if (this.readyState == 4 && this.status == 200) {
-                log.log("Done load url: " + url, L.LOG_INFO);
                 if (useResponseType) { // XHR 2
                     var bb = new BlobBuilder();
                     bb.append(this.response);
@@ -243,158 +391,12 @@
                     d.resolve(res);
                 }
             } else if (this.readyState == 4) {
-                log.log("Fail load url: " + url, L.LOG_ERROR);
                 d.reject(xhr);
             }
         };
         xhr.send();
 
         return d.promise();
-    };
-
-    var parsePNGData = function(imageData) {
-        var d = new Deferred();
-
-        log.log("Start data parsing: " + escape(imageData.substr(0, 8)) + "...", L.LOG_INFO);
-
-        if (imageData.substr(0, 8) != PNG_SIGNATURE) {
-            log.log("Invalid PNG file signature: " + escape(imageData.substr(0, 8)) + "...", L.LOG_ERROR);
-            d.reject("Invalid PNG file signature");
-            return d.promise();
-        }
-
-        var aPng = {
-            width:  0,
-            height: 0,
-            isAnimated: false,
-            numPlays:   0,
-            frames: []
-        };
-
-        var headerData, preData = "", postData = "";
-
-        var off = 8, frame = null;
-        do {
-            var length = readDWord(imageData.substr(off, 4));
-            var type = imageData.substr(off + 4, 4);
-            var data;
-
-            log.log("Found chunk: " + type, L.LOG_DEBUG2);
-
-            switch (type) {
-                case "IHDR":
-                    data = imageData.substr(off + 8, length);
-                    headerData = data;
-                    aPng.width = readDWord(data.substr(0, 4));
-                    aPng.height = readDWord(data.substr(4, 4));
-                    log.log("Image has size " + aPng.width + "x" + aPng.height, L.LOG_DEBUG);
-                    break;
-                case "acTL":
-                    aPng.isAnimated = true;
-                    aPng.numPlays = readDWord(imageData.substr(off + 8 + 4, 4));
-                    log.log("Image is animated", L.LOG_DEBUG);
-                    break;
-                case "fcTL":
-                    if (frame) aPng.frames.push(frame);
-                    data = imageData.substr(off + 8, length);
-                    frame = {};
-                    frame.width     = readDWord(data.substr(4, 4));
-                    frame.height    = readDWord(data.substr(8, 4));
-                    frame.left      = readDWord(data.substr(12, 4));
-                    frame.top       = readDWord(data.substr(16, 4));
-                    var delayN      = readWord(data.substr(20, 2));
-                    var delayD      = readWord(data.substr(22, 2));
-                    if (delayD == 0) delayD = 100;
-                    frame.delay = 1000 * delayN / delayD;
-                    frame.disposeOp = data.charCodeAt(24);
-                    frame.blendOp   = data.charCodeAt(25);
-                    frame.dataParts = [];
-                    break;
-                case "fdAT":
-                    if (frame) frame.dataParts.push(imageData.substr(off + 8 + 4, length - 4));
-                    break;
-                case "IDAT":
-                    if (frame) frame.dataParts.push(imageData.substr(off + 8, length));
-                    break;
-                case "IEND":
-                    postData = imageData.substr(off, length + 12);
-                    break;
-                default:
-                    preData += imageData.substr(off, length + 12);
-            }
-            off += 12 + length;
-        } while(type != "IEND" && off < imageData.length);
-        if (frame) aPng.frames.push(frame);
-
-        log.log("Found " + aPng.frames.length + " frames", L.LOG_DEBUG);
-
-        // Вариант неанимированного PNG
-        if (!aPng.isAnimated) d.resolve(aPng);
-
-        // Собираем кадры
-        log.log("Start making frames", L.LOG_INFO);
-        var loadedImages = 0;
-        for (var i = 0; i < aPng.frames.length; i++) {
-            var img = new Image();
-            frame = aPng.frames[i];
-            frame.img = img;
-            img.onload = function() {
-                loadedImages++;
-                log.log("Image created (" + loadedImages + ")", L.LOG_DEBUG2);
-                if (loadedImages == aPng.frames.length) d.resolve(aPng);
-            };
-            img.onerror = function() {
-                log.log("Image creation error", L.LOG_ERROR);
-                d.reject("Image creation error");
-            };
-
-            var db = new DataBuilder();
-            db.append(PNG_SIGNATURE);
-            headerData = writeDWord(frame.width) + writeDWord(frame.height) + headerData.substr(8);
-            db.append(writeChunk("IHDR", headerData));
-            db.append(preData);
-            for (var j = 0; j < frame.dataParts.length; j++) {
-                db.append(writeChunk("IDAT", frame.dataParts[j]));
-            }
-            db.append(postData);
-            var url = db.getUrl("image/png");
-            log.log("Image url: " + url.substr(0, 64) + "...", L.LOG_DEBUG2);
-            img.src = url;
-            delete frame.dataParts;
-        }
-        return d.promise();
-    };
-
-    var animate = function(aPng, canvas) {
-        var ctx = canvas.getContext('2d');
-        var fNum = 0;
-        var prevF = null;
-        var tick = function() {
-            var f = fNum++ % aPng.frames.length;
-            var frame = aPng.frames[f];
-
-            if (f == 0) {
-                ctx.clearRect(0, 0, aPng.width, aPng.height);
-                prevF = null;
-                if (frame.disposeOp == 2) frame.disposeOp = 1;
-            }
-
-            if (prevF && prevF.disposeOp == 1) {
-                ctx.clearRect(prevF.left, prevF.top, prevF.width, prevF.height);
-            } else if (prevF && prevF.disposeOp == 2) {
-                ctx.putImageData(prevF.iData, prevF.left, prevF.top);
-            }
-            prevF = frame;
-            prevF.iData = null;
-            if (prevF.disposeOp == 2) prevF.iData = ctx.getImageData(frame.left, frame.top, frame.width, frame.height);
-            if (frame.blendOp == 0) ctx.clearRect(frame.left, frame.top, frame.width, frame.height);
-            ctx.drawImage(frame.img, frame.left, frame.top);
-
-            if (aPng.numPlays == 0 || fNum / aPng.frames.length < aPng.numPlays) {
-                setTimeout(tick, frame.delay);
-            }
-        };
-        tick();
     };
 
 })();
