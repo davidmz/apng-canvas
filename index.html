@@ -17,14 +17,14 @@
             });
 
             APNG.ifNeeded(function() {
-                $("#one img").each(function() { APNG.replaceImage(this); });
+                $("#one img").each(function() { APNG.animateImage(this); });
             }).fail(function(message) {
                 $("#message").show().text("apng-canvas not needed: " + message);
             });
             $("#one a").click(function() {
                 $("#one").hide().next().show();
                 APNG.ifNeeded(function() {
-                    $("img").each(function() { APNG.replaceImage(this); });
+                    $("img").each(function() { APNG.animateImage(this); });
                 });
                 return false;
             });
