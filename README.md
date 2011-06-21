@@ -1,57 +1,56 @@
 APNG-canvas
 ==============
 
-Библиотека для отображения Animated PNG в браузерах, которые поддерживают canvas (т. е. в Google Chrome, Internet Explorer 9, Apple Safari).
+([README по-русски](https://github.com/davidmz/apng-canvas/blob/master/README_RU.md))
 
-Работающие примеры: http://davidmz.github.com/apng-canvas/ (общий вес изображений — около 3 Мб)
+APNG-canvas is a library for displaing Animated PNG files in the browsers with canvas support (Google Chrome, Internet Explorer 9, Apple Safari).
 
-Обсуждение в ЖЖ: http://david-m.livejournal.com/tag/apng-canvas
+Working demo: http://davidmz.github.com/apng-canvas/ (around 3 Mb of apng files)
+
+Discussion in LJ: http://david-m.livejournal.com/tag/apng-canvas (in russain)
 
 API
 -----------
 
-Бибилиотека создаёт глобальный объект **APNG**, имеющий несколько методов. Все методы работают асинхронно, большинство принимаeт необязательный callback-аргумент. Методы должны вызываться после загрузки DOM-дерева.
+The library creates a global object **APNG**, which has several methods. All methods are asynchronous and most of them receive an optional callback-argument. Methods must be called after DOM tree is loaded.
 
-Для тех, кому удобнее deferred-вызовы, методы возвращают *promise*-объекты. Если на странице присутствует jQuery, то используются его [promises](http://api.jquery.com/category/deferred-object/), в противном случае используется совместимый интерфейс, поддерживающий методы `done`, `fail`, `then` и `always`. В случае успешного выполнения метода, вызывается `callback` и обработчики `done` (с одинаковыми параметрами), в случае ошибки вызываются обработчики `fail` с сообщением об ошибке.
+For deferred calls, these methods return *promise* objects. If jQuery is available, then its [promises](http://api.jquery.com/category/deferred-object/) are used, in other case a compatible interface which supports methods `done`, `fail`, `then` and `always` is used. If the method is finished successfully, `callback` and `done` handlers are called (with the same parameters), in case of error `fail` hendlers are called with the error message.
 
 ### APNG.ifNeeded(callback?)
 
-`callback` вызывается без аргументов, и только в том случае, если браузер поддерживает `canvas`
-и не поддерживает `APNG`. Только в этом случае имеет смысл применение этой библиотеки.
-Остальные методы (кроме `checkNativeFeatures`) должны вызываться из `callback`-а.
+The `callback` is called without arguments, and only when browser supports `canvas` but not `APNG`. Only in that case it makes sense to use this library.
+Other methods (except `checkNativeFeatures`) should be called from the `callback`.
 
 ### APNG.animateImage(img)
 
-Этот метод вызывается без `callback`. Если `img.src` содержит ссылку на корректный APNG-файл, то метод создаёт `canvas`, в котором проигрывается APNG-анимация.
-Далее метод выбирает оптимальную стратегию анимации в зависимости от браузера:
+This method is called without `callback`. If `img.src` contains a link to the correct APNG file, then this methods creates `canvas`, in which APNG animations would be played.
+Then the method selects optimal strategy for animaton depending on the browser:
 
-*   Для браузеров на базе `webkit` (Chrome и Safari):
-    `src` исходного изображения заменяется на прозрачный gif и к нему добавляется фоновое изображение,
-    в котором проигрывается анимация. Это позволяет сохранить объект `img` без изменения,
-    в том числе сохраняются все его атрибуты и обработчики событий.
-*   Для остальных браузеров (Internet Explorer 9):
-    действует аналогично методу `replaceImage` (см. ниже) — исходный объект `img` заменяется на объект `canvas` с анимацией.
+*   For WebKit-based broswers (Chrome and Safari):
+    `src` of the source image is replaced by a transparent gif plus background image where the animation is played.
+    That allows to keep the `img` object, its attributes and event handlers.
+*   For other browsers (Internet Explorer 9):
+    Works similar to the `replaceImage` method (below): source image `img` is replaced with `canvas` animation object.
 
 ### APNG.replaceImage(img)
 
-Этот метод вызывается без `callback`. Заменяет элемент `img` (`HTMLImageElement`) на `canvas` с анимацией. Замена происходит только если `img` содержит корректный APNG-файл.
-При замене сохраняются атрибуты элемента `img`. Если в системе присутствует jQuery, то сохраняются обработчики событий.
+This method is called without `callback`. Replaces `img` element (`HTMLImageElement`) with `canvas` animation. Replacement only works when `img` contains correct PNG file. The replacement keeps the attributes of `img`. If jQuery is available, than event handlers are kept too.
 
-Этот метод работает одинаково во всех браузерах.
+This method works the same in all browsers.
 
 ### APNG.createAPNGCanvas(url, callback?)
 
-Загружает PNG-файл по данному `url`, разбирает его, создаёт элемент `canvas` и запускает анимацию.
+Loads PNG file from that `url` and disassembles it, then creates `canvas` element and starts the animation.
 
-`callback` вызывается только если полученные данные являются корректным APNG-файлом. Аргумент — созданный элемент `canvas`, в котором проигрывается анимация. Элемент не включён в DOM-дерево, это нужно сделать вручную.
+The `callback` is only called when the loaded data contains the correct APNG file. The argument is newly created `canvas` animation element. This element is not a part of the DOM tree, it have to be added manually.
 
 ### APNG.checkNativeFeatures(callback?)
 
-Проверяет, поддерживает ли браузер `APNG` и `canvas`. Может вызываться независимо от прочих методов. В `callback` передаётся объект с двумя булевыми полями: `apng` и `canvas`. True в любом поле означает поддержку браузером соответствующей технологии.
+Checks if the browser supports `APNG` and `canvas`. Can be called independently from all other methods. The `callback` argument is the objects with two binary fields: `apng` and `canvas`. `True` in those fields means the browser supports correcponding technology.
 
 
-Пример использования
---------------------
+Usage example
+-------------
 
     APNG.ifNeeded(function() {
         for (var i = 0; i < document.images.length; i++) {
@@ -60,13 +59,17 @@ API
     });
 
 
-Ограничения
+Limitations
 -----------
 
-Поскольку изображения загружаются при помощи `XMLHttpRequest`, то домен, на котором расположена картинка, должен быть тем же, что и домен, на котором расположена страничка.
+Since the images are loaded by `XMLHttpRequest`, the images domain should be the same as the webpage domain.
 
-Если домены разные, то в Chrome/Safari можно использовать [CORS](http://www.w3.org/TR/cors/ "Cross-Origin Resource Sharing"), настроив сервер картинок на отдачу заголовка `Access-Control-Allow-Origin: *`.
+If domains are different, then in Chrome/Safari it is possible to use [CORS](http://www.w3.org/TR/cors/ "Cross-Origin Resource Sharing"), by making sure the image server returns `Access-Control-Allow-Origin: *` header.
 
-К сожалению, применить CORS в случае с IE, по видимому, невозможно, так как соотв. объект `XDomainRequest` не позволяет получить ответ в виде двоичных данных (`XMLHttpRequest` позволяет это сделать через свойство `responseBody`).
+Unfortunately, it seems that CORS cannot by used in IE, because the corresponding object `XDomainRequest` will not return the result as binary data (`XMLHttpRequest` allows that by using `responseBody` property).
 
-По той же причине (использование `XMLHttpRequest`) библиотека не будет работать с локальной машины (по протоколу file://).
+By the same reason (the use of `XMLHttpRequest`), the library will not work locally, with file:// protocol.
+
+-----------------------------------
+
+Thanks to Max Stepin for the translation of this README.
