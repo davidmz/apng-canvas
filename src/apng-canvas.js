@@ -12,6 +12,7 @@
 
     var global = (function(){ return this; })();
     var $ = global.jQuery || null;
+    var cssCanvasEnabled = !!document.getCSSCanvasContext;
 
     var APNG = global.APNG = {};
 
@@ -76,55 +77,75 @@
         var d = new Deferred();
         if (callback) d.promise().done(callback);
 
-        var a;
-        if (url in urlToAnimation) {
-            a = urlToAnimation[url];
-        } else {
-            a = new Animation();
-            urlToAnimation[url] = a;
-            allAnimations.push(a);
-            Deferred.pipeline(url) ( loadBinaryData, proxy(a.parsePNGData, a));
-        }
-        a.whenReady().done(function() {
-            var canvas = a.addCanvas();
-            d.resolve(canvas);
+        Animation.createFromUrl(url).done(function() {
+            d.resolve(this.addCanvas());
         }).fail(proxy(d.reject, d));
 
         return d.promise();
     };
 
-    APNG.replaceImage = function(img) {
-        return APNG.createAPNGCanvas(img.src).done(function(canvas) {
-            for (var i = 0; i < img.attributes.length; i++) {
-                var attr = img.attributes[i];
-                if (["alt","src","usemap","ismap"].indexOf(attr.nodeName) == -1) {
-                    canvas.setAttributeNode(attr.cloneNode());
-                }
+    APNG.animateImage = function(img) {
+        if (cssCanvasEnabled) {
+            var d = new Deferred();
+            if (img.hasAttribute("data-apng-src")) {
+                d.reject("Image already animated");
+            } else {
+                Animation.createFromUrl(img.src).done(function() {
+                    var ctxName = this.getCSSCanvasContextName();
+                    img.setAttribute("data-apng-src", img.src);
+                    img.src = EMPTY_GIF_URL;
+                    img.style.backgroundImage = "-webkit-canvas(" + ctxName + ")";
+                    d.resolve();
+                }).fail(proxy(d.reject, d));
             }
-            /**
-             * Если в системе есть jQuery, копируем привязанные обработчики событий
-             */
-            if ($) {
-                var events = $(img).data("events");
-                if (events) {
-                    for ( var type in events ) {
-                        for ( var j = 0, l = events[type].length; j < l; j++ ) {
-                            var h = events[type][j];
-                            $(canvas).bind(type + (h.namespace ? "." : "") + h.namespace, h.data, h.handler);
+            return d.promise();
+        } else {
+            return this.replaceImage(img);
+        }
+    };
+
+    APNG.replaceImage = function(img) {
+        if (img.hasAttribute("data-apng-src")) {
+            var d = new Deferred();
+            d.reject("Image already animated");
+            return d.promise();
+        } else {
+            return APNG.createAPNGCanvas(img.src).done(function(canvas) {
+                for (var i = 0; i < img.attributes.length; i++) {
+                    var attr = img.attributes[i];
+                    if (["alt","src","usemap","ismap"].indexOf(attr.nodeName) == -1) {
+                        canvas.setAttributeNode(attr.cloneNode());
+                    }
+                    img.setAttribute("data-apng-src", img.src);
+                }
+                /**
+                 * Если в системе есть jQuery, копируем привязанные обработчики событий
+                 */
+                if ($) {
+                    var events = $(img).data("events");
+                    if (events) {
+                        for ( var type in events ) {
+                            for ( var j = 0, l = events[type].length; j < l; j++ ) {
+                                var h = events[type][j];
+                                $(canvas).bind(type + (h.namespace ? "." : "") + h.namespace, h.data, h.handler);
+                            }
                         }
                     }
                 }
-            }
-            var p = img.parentNode;
-            p.insertBefore(canvas, img);
-            p.removeChild(img);
-        });
+                var p = img.parentNode;
+                p.insertBefore(canvas, img);
+                p.removeChild(img);
+            });
+        }
     };
 
     /************************* HELPERS ***************************/
 
     // "\x89PNG\x0d\x0a\x1a\x0a"
     var PNG_SIGNATURE = String.fromCharCode(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+    var EMPTY_GIF_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+
+    var ctxNamePrefix = "apng-canvas-css-", ctxNameCounter = 1;
 
     var readDWord = function(data) {
         var x = 0;
@@ -190,11 +211,6 @@
         });
     }
 
-    /**
-     * hash url -> animation
-     */
-    var allAnimations = [], urlToAnimation = {};
-
     // requestAnimationFrame over setTimeout
     var rafList = [];
     (function() {
@@ -220,6 +236,8 @@
     requestAnimationFrame(tick);
 
     var Animation = function() {
+        var thisAnimation = this;
+
         this.isActive = false;
         this.nextRenderTime = 0;
 
@@ -304,7 +322,7 @@
                 frame.img = img;
                 img.onload = function() {
                     loadedImages++;
-                    if (loadedImages == self.frames.length) d.resolve(this);
+                    if (loadedImages == self.frames.length) d.resolveWith(thisAnimation);
                 };
                 img.onerror = function() { d.reject("Image creation error"); };
 
@@ -336,6 +354,22 @@
             }
             this.isActive = true;
             return canvas;
+        };
+
+        var contextName = null;
+        this.getCSSCanvasContextName = function() {
+            if (!contextName) {
+                contextName = ctxNamePrefix + (ctxNameCounter++);
+                var ctx = document.getCSSCanvasContext("2d", contextName, this.width, this.height);
+                contexts.push(ctx);
+                if (contexts.length > 1) {
+                    requestAnimationFrame(function() {
+                        ctx.putImageData(contexts[0].getImageData(0, 0, thisAnimation.width, thisAnimation.height), 0, 0);
+                    });
+                }
+                this.isActive = true;
+            }
+            return contextName;
         };
 
         var fNum = 0;
@@ -432,6 +466,20 @@
         xhr.send();
 
         return d.promise();
+    };
+
+    var allAnimations = [], urlToAnimation = {};
+    Animation.createFromUrl = function(url) {
+        var a;
+        if (url in urlToAnimation) {
+            a = urlToAnimation[url];
+        } else {
+            a = new Animation();
+            urlToAnimation[url] = a;
+            allAnimations.push(a);
+            Deferred.pipeline(url) ( loadBinaryData, proxy(a.parsePNGData, a));
+        }
+        return a.whenReady();
     };
 
 })();
