@@ -92,9 +92,14 @@
             } else {
                 Animation.createFromUrl(img.src).done(function() {
                     var ctxName = this.getCSSCanvasContextName();
+                    if (!img.hasAttribute("width") && !img.style.width)
+                        img.style.width = global.getComputedStyle(img).width;
+                    if (!img.hasAttribute("height") && !img.style.height)
+                        img.style.height = global.getComputedStyle(img).height;
                     img.setAttribute("data-apng-src", img.src);
                     img.src = EMPTY_GIF_URL;
                     img.style.backgroundImage = "-webkit-canvas(" + ctxName + ")";
+                    img.style.backgroundSize = "100% 100%";
                     d.resolve();
                 }).fail(proxy(d.reject, d));
             }
