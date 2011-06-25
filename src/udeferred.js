@@ -54,12 +54,14 @@
             deferred.resolve = function() { return setStatus(1, arguments, promise); };
             deferred.reject  = function() { return setStatus(2, arguments, promise); };
             deferred.resolveWith = function() {
-                var ctx = arguments.shift();
-                return setStatus(1, arguments, ctx);
+                var args = Array.prototype.slice.call(arguments);
+                var ctx = args.shift();
+                return setStatus(1, args, ctx);
             };
             deferred.rejectWith = function() {
-                var ctx = arguments.shift();
-                return setStatus(2, arguments, ctx);
+                var args = Array.prototype.slice.call(arguments);
+                var ctx = args.shift();
+                return setStatus(2, args, ctx);
             };
 
             // Promise object methods
