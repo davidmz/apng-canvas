@@ -87,20 +87,23 @@
     APNG.animateImage = function(img) {
         if (cssCanvasEnabled) {
             var d = new Deferred();
-            if (img.hasAttribute("data-apng-src")) {
+            if (img.apngCanvasStatus) {
                 d.reject("Image already animated");
             } else {
+                img.apngCanvasStatus = "progress";
                 Animation.createFromUrl(img.src).done(function() {
                     var ctxName = this.getCSSCanvasContextName();
                     if (!img.hasAttribute("width") && !img.style.width)
                         img.style.width = global.getComputedStyle(img).width;
                     if (!img.hasAttribute("height") && !img.style.height)
                         img.style.height = global.getComputedStyle(img).height;
-                    img.setAttribute("data-apng-src", img.src);
-                    img.src = EMPTY_GIF_URL;
+                    img.apngCanvasStatus = "done";
+                    img.style.content = "url(" + EMPTY_GIF_URL + ")";
                     img.style.backgroundImage = "-webkit-canvas(" + ctxName + ")";
                     img.style.backgroundSize = "100% 100%";
                     d.resolve();
+                }).fail(function() {
+                    img.apngCanvasStatus = "fail";
                 }).fail(proxy(d.reject, d));
             }
             return d.promise();
@@ -110,19 +113,20 @@
     };
 
     APNG.replaceImage = function(img) {
-        if (img.hasAttribute("data-apng-src")) {
+        if (img.apngCanvasStatus) {
             var d = new Deferred();
             d.reject("Image already animated");
             return d.promise();
         } else {
+            img.apngCanvasStatus = "progress";
             return APNG.createAPNGCanvas(img.src).done(function(canvas) {
                 for (var i = 0; i < img.attributes.length; i++) {
                     var attr = img.attributes[i];
                     if (["alt","src","usemap","ismap"].indexOf(attr.nodeName) == -1) {
                         canvas.setAttributeNode(attr.cloneNode());
                     }
-                    img.setAttribute("data-apng-src", img.src);
                 }
+                canvas.setAttributeNode("data-apng-src", img.src);
                 /**
                  * Если в системе есть jQuery, копируем привязанные обработчики событий
                  */
@@ -140,6 +144,8 @@
                 var p = img.parentNode;
                 p.insertBefore(canvas, img);
                 p.removeChild(img);
+            }).fail(function() {
+                img.apngCanvasStatus = "fail";
             });
         }
     };

@@ -27,7 +27,7 @@ This method is called without `callback`. If `img.src` contains a link to the co
 Then the method selects optimal strategy for animaton depending on the browser:
 
 *   For WebKit-based broswers (Chrome and Safari):
-    `src` of the source image is replaced by a transparent gif plus background image where the animation is played.
+    source image is replaced by a transparent gif plus background canvas where the animation is played.
     That allows to keep the `img` object, its attributes and event handlers.
 *   For other browsers (Internet Explorer 9):
     Works similar to the `replaceImage` method (below): source image `img` is replaced with `canvas` animation object.
