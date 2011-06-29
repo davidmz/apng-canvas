@@ -87,23 +87,23 @@
     APNG.animateImage = function(img) {
         if (cssCanvasEnabled) {
             var d = new Deferred();
-            if (img.apngCanvasStatus) {
+            if (img.hasAttribute("data-is-apng")) {
                 d.reject("Image already animated");
             } else {
-                img.apngCanvasStatus = "progress";
+                img.setAttribute("data-is-apng", "progress");
                 Animation.createFromUrl(img.src).done(function() {
                     var ctxName = this.getCSSCanvasContextName();
                     if (!img.hasAttribute("width") && !img.style.width)
                         img.style.width = global.getComputedStyle(img).width;
                     if (!img.hasAttribute("height") && !img.style.height)
                         img.style.height = global.getComputedStyle(img).height;
-                    img.apngCanvasStatus = "done";
+                    img.setAttribute("data-is-apng", "yes");
                     img.style.content = "url(" + EMPTY_GIF_URL + ")";
                     img.style.backgroundImage = "-webkit-canvas(" + ctxName + ")";
                     img.style.backgroundSize = "100% 100%";
                     d.resolve();
                 }).fail(function() {
-                    img.apngCanvasStatus = "fail";
+                    img.setAttribute("data-is-apng", "no");
                 }).fail(proxy(d.reject, d));
             }
             return d.promise();
@@ -113,12 +113,12 @@
     };
 
     APNG.replaceImage = function(img) {
-        if (img.apngCanvasStatus) {
+        if (img.hasAttribute("data-is-apng")) {
             var d = new Deferred();
             d.reject("Image already animated");
             return d.promise();
         } else {
-            img.apngCanvasStatus = "progress";
+            img.setAttribute("data-is-apng", "progress");
             return APNG.createAPNGCanvas(img.src).done(function(canvas) {
                 for (var i = 0; i < img.attributes.length; i++) {
                     var attr = img.attributes[i];
@@ -126,7 +126,7 @@
                         canvas.setAttributeNode(attr.cloneNode());
                     }
                 }
-                canvas.setAttributeNode("data-apng-src", img.src);
+                canvas.setAttribute("data-apng-src", img.src);
                 /**
                  * Если в системе есть jQuery, копируем привязанные обработчики событий
                  */
@@ -145,7 +145,7 @@
                 p.insertBefore(canvas, img);
                 p.removeChild(img);
             }).fail(function() {
-                img.apngCanvasStatus = "fail";
+                img.setAttribute("data-is-apng", "no");
             });
         }
     };
@@ -298,6 +298,8 @@
                         var delayD      = readWord(data.substr(22, 2));
                         if (delayD == 0) delayD = 100;
                         frame.delay = 1000 * delayN / delayD;
+                        // see http://mxr.mozilla.org/mozilla/source/gfx/src/shared/gfxImageFrame.cpp#343
+                        if (frame.delay <= 10) frame.delay = 100;
                         this.playTime += frame.delay;
                         frame.disposeOp = data.charCodeAt(24);
                         frame.blendOp   = data.charCodeAt(25);
