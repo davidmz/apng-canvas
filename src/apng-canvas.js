@@ -98,9 +98,7 @@
                     if (!img.hasAttribute("height") && !img.style.height)
                         img.style.height = global.getComputedStyle(img).height;
                     img.setAttribute("data-is-apng", "yes");
-                    img.style.content = "url(" + EMPTY_GIF_URL + ")";
-                    img.style.backgroundImage = "-webkit-canvas(" + ctxName + ")";
-                    img.style.backgroundSize = "100% 100%";
+                    img.style.content = "-webkit-canvas(" + ctxName + ")";
                     d.resolve();
                 }).fail(function() {
                     img.setAttribute("data-is-apng", "no");
@@ -154,7 +152,6 @@
 
     // "\x89PNG\x0d\x0a\x1a\x0a"
     var PNG_SIGNATURE = String.fromCharCode(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
-    var EMPTY_GIF_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 
     var ctxNamePrefix = "apng-canvas-css-", ctxNameCounter = 1;
 
