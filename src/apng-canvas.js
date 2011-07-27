@@ -235,6 +235,7 @@
 
     // Main animation loop
     var tick = function(t) {
+        if (typeof t != "number") t = t.getTime(); // webOS
         for (var i = 0; i < allAnimations.length; i++) {
             var anim = allAnimations[i];
             while (anim.isActive && anim.nextRenderTime <= t) anim.renderFrame(t);
