@@ -72,6 +72,22 @@
         }).done(function() { d.reject(); });
         return d.promise();
     };
+    
+    if(global.$)
+    APNG.animateCSS = function(element){
+      var bg = $(element).css("background-image");
+      var matches = bg.match(/url\((['"]?)(.*?)\1\)/g) || [];
+        for(var i=0;i<matches.length;i++){
+          var url = matches[i].match(/url\((['"]?)(.*?)\1\)/)[2];
+          if(probablyPngUrl(url)) {
+            (function(url,m){
+              loadAndAnimateUrl(url).done(function(){
+                $(element).css("background-image",$(element).css("background-image").replace(m,"-webkit-canvas("+this.getCSSCanvasContextName()+")"));
+              });
+            })(url,matches[i]);
+          }
+       }
+    }
 
     APNG.createAPNGCanvas = function(url, callback) {
         var d = new Deferred();
