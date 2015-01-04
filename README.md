@@ -143,3 +143,9 @@ Downloads an image from the supplied URL, parses it, and plays it in the given c
 **Fulfilled** (Animation): Similar to output of *APNG.parseURL*.
 
 **Rejected** (mixed): There was an error when downloading or parsing.
+
+Build instructions
+-----------
+
+    npm install
+    gulp build
