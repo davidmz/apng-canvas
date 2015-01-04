@@ -5,7 +5,7 @@ apng-canvas v2
 
 Library to display Animated PNG ([Wikipedia](http://en.wikipedia.org/wiki/APNG), [specification](https://wiki.mozilla.org/APNG_Specification)) in a browser using canvas.
 
-**Please note! API version 2 of the library is incompatible with the API version 1! **
+**Please note! API version 2 of the library is incompatible with the API version 1!**
 
 The library requires support from the following technologies in order to run:
 
@@ -143,3 +143,9 @@ Downloads an image from the supplied URL, parses it, and plays it in the given c
 **Fulfilled** (Animation): Similar to output of *APNG.parseURL*.
 
 **Rejected** (mixed): There was an error when downloading or parsing.
+
+Build instructions
+-----------
+
+    npm install
+    gulp build
