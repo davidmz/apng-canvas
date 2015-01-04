@@ -42,106 +42,22 @@ API
 
 Библиотека создаёт глобальный объект **APNG**, имеющий несколько методов.
 
-Все методы работают асинхронно и возвращают объект *ES6 Promise*. Большинство браузеров имеют его [встроенную поддержку](http://caniuse.com/#feat=promises), 
+Высокоуровневые методы:
+
+* [APNG.ifNeeded](API_RU.md#user-content-apngifneededignorenativeapng-boolean)
+* [APNG.animateImage](API_RU.md#user-content-apnganimateimageimg-htmlimageelement)
+
+Низкоуровневые методы:
+
+* [APNG.checkNativeFeatures](API_RU.md#user-content-apngchecknativefeatures)
+* [APNG.parseBuffer](API_RU.md#user-content-apngparsebufferdata-arraybuffer)
+* [APNG.parseURL](API_RU.md#user-content-apngparseurlurl-string)
+* [APNG.animateContext](API_RU.md#user-content-apnganimatecontexturl-string-canvasrenderingcontext2d-context)
+
+Все методы работают асинхронно и возвращают объект ES6 *Promise*. Большинство браузеров имеют его [встроенную поддержку](http://caniuse.com/#feat=promises), 
 для остальных используется [полифилл](https://github.com/jakearchibald/es6-promise), включённый в библиотеку.
 Если вы не работали раньше с Promises, то вам поможет [обзорная статья](http://www.html5rocks.com/en/tutorials/es6/promises/) об этой технологии. В описании методов приводятся
 значения результата-Promise в случае его выполнения (filfilled) или отказа (rejected).
-
-### Высокоуровневые методы
-
-#### APNG.ifNeeded(\[ignoreNativeAPNG boolean\])
-Проверяет, есть ли необходимость в использовании библиотеки.
-
-**Fulfilled** (без значения): Браузер поддерживает все необходимые для работы технологии, но не поддерживает APNG. Обычно применение
-библиотеки имеет смысл только в этом случае.
-
-Если необязательный параметр *ignoreNativeAPNG* имеет значение *true*, то поддержка APNG не проверяется.
-
-**Rejected** (без значения): Браузер имеет встроенную поддержку APNG (если не задан *ignoreNativeAPNG*) или поддерживает не все необходимые для работы технологии.
-
-#### APNG.animateImage(img HTMLImageElement)
-Создаёт элемент `canvas`, в котором проигрывается APNG-анимация. Элемент `img` удаляется из DOM-а и заменяется на `canvas`.
-При замене сохраняются атрибуты элемента `img`.
-
-**Fulfilled** (без значения): Переданный элемент `img` является APNG-изображением.
-
-**Rejected** (без значения): Переданный элемент `img` не является APNG-изображением, либо при его обработке произошла ошибка. Замены элемента на `canvas` при этом не происходит. 
-
-### Низкоуровневые методы
-
-#### APNG.checkNativeFeatures()
-Проверяет, какие технологии поддерживает браузер.
-
-**Fulfilled** (Features): Возвращает объект *Features* со следующими полями:
-
-    {
-        TypedArrays:    boolean
-        BlobURLs:       boolean
-        requestAnimationFrame: boolean
-        pageProtocol:   boolean
-        canvas:         boolean
-        APNG:           boolean
-    }
-
-Каждое поле имеет значение *true* или *false*. *True* означает встроенную поддержку браузером соответствующей технологии. 
-Поле `pageProtocol` имеет значение *true*, если страница загружена по протоколу *http* или *https* (на страницах, загруженных по другим протоколам,
-работа библиотеки невозможна).
-
-Библиотека может работать, если все поля, кроме APNG, имеют значения `true`.
-
-**Rejected**: Не используется.
-
-#### APNG.parseBuffer(data ArrayBuffer)
-Разбирает двоичные данные APNG-файла.
-
-**Fulfilled** (Animation): Если переданные данные соответствуют корректному APNG, то возвращает объект *Animation* со следующими полями:
-
-    {
-        // Поля
-        
-        width:      int // ширина изображения
-        height:     int // высота изображения
-        numPlays:   int // число повторов анимации (0 - бесконечный повтор)
-        playTime:   int // время проигрывания одного цикла анимации в милисекундах
-        frames: [       // массив фреймов анимации
-            {
-                width:  int // ширина изображения фрейма
-                height: int // высота изображения фрейма
-                left:   int // смещение изображения фрейма по горизонтали
-                top:    int // смещение изображения фрейма по вертикали
-                delay:  int // задержка данного фрейма в милисекундах
-                disposeOp:  int // режим восстановления изображения (см. стандарт)
-                blendOp:    int // режим наложения (см. стандарт)
-                img:    HTMLImageElement // изображение                   
-            }
-        ]
-        
-        // Методы
-        
-        isPlayed(): boolean     // проигрывется ли сейчас анимация? 
-        isFinished(): boolean   // завершена ли анимация (если numPlays <> 0)? 
-        play()                  // запустить проигрывание (если не проигрывается и не завершена)
-        rewind()                // вернуть анимацию к началу и остановить
-        addContext(CanvasRenderingContext2D)    // проигрывать анимацию на этом canvas-контексте 
-                                                // (одна анимация может проигрываться на нескольких контекстах)
-    }
-
-**Rejected** (string): Файл не является корректным APNG, либо произошла ошибка разбора. Возвращает строку с сообщением об ошибке.
-
-#### APNG.parseURL(url string)
-Скачивает изображение по заданному URL и разбирает его.
-
-**Fulfilled** (Animation): Если загруженные данные соответствуют корректному APNG, то возвращает объект *Animation* (см. *APNG.parseBuffer*).
-Для одинаковых URL возвращается один и тот же объект *Animation*.
-
-**Rejected** (mixed): При загрузке или разборе произошла ошибка.
-
-#### APNG.animateContext(url string, CanvasRenderingContext2D context)
-Скачивает изображение по заданному URL, разбирает его и проигрывает на заданном canvas-контексте.
-
-**Fulfilled** (Animation): Аналогично результату *APNG.parseURL*.
-
-**Rejected** (mixed): При загрузке или разборе произошла ошибка.
 
 Сборка
 -----------
