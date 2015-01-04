@@ -5,6 +5,8 @@ apng-canvas v2
 
 Library to display Animated PNG ([Wikipedia](http://en.wikipedia.org/wiki/APNG), [specification](https://wiki.mozilla.org/APNG_Specification)) in a browser using canvas.
 
+Working demo: http://davidmz.github.com/apng-canvas/ (around 3 Mb of apng files)
+
 **Please note! API version 2 of the library is incompatible with the API version 1!**
 
 The library requires support from the following technologies in order to run:
@@ -62,7 +64,7 @@ If optional argument *ignoreNativeAPNG* is *true*, then native APNG support isn'
 
 #### APNG.animateImage(img HTMLImageElement)
 Creates a `canvas` element where the APNG animation plays. The `img` element is removed from the DOM and replaced by `canvas`.
-The `img` element attributes are preserved during replacement. If jQuery is present in the system, then the event handlers are preserved.
+The `img` element attributes are preserved during replacement.
 
 **Fulfilled** (no value): The `img` element is an APNG image.
 

@@ -4,6 +4,8 @@ apng-canvas v2
 Библиотека для отображения Animated PNG ([Wikipedia](http://en.wikipedia.org/wiki/APNG), [стандарт](https://wiki.mozilla.org/APNG_Specification)) 
 в браузере при помощи canvas.
 
+Демонстрация: http://davidmz.github.com/apng-canvas/ (3 Mb of apng files)
+
 **Внимание! API версии 2 библиотеки несовместимо с API версии 1!**
 
 Для работы библиотеке требуется поддержка следующих технологий:
@@ -59,7 +61,7 @@ API
 
 #### APNG.animateImage(img HTMLImageElement)
 Создаёт элемент `canvas`, в котором проигрывается APNG-анимация. Элемент `img` удаляется из DOM-а и заменяется на `canvas`.
-При замене сохраняются атрибуты элемента `img`. Если в системе присутствует jQuery, то сохраняются обработчики событий.
+При замене сохраняются атрибуты элемента `img`.
 
 **Fulfilled** (без значения): Переданный элемент `img` является APNG-изображением.
 

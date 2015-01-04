@@ -95,19 +95,6 @@ APNG.animateImage = function (img) {
             canvas.style.width = imgWidth;
             canvas.style.height = imgHeight;
 
-            // jQuery event handlers
-            if ("jQuery" in global) {
-                var $ = global.jQuery;
-                var events = $(img).data("events");
-                if (events) {
-                    for (var type in events) if (events.hasOwnProperty(type)) {
-                        for (var j = 0, l = events[type].length; j < l; j++) {
-                            var h = events[type][j];
-                            $(canvas).bind(type + (h.namespace ? "." : "") + h.namespace, h.data, h.handler);
-                        }
-                    }
-                }
-            }
             var p = img.parentNode;
             p.insertBefore(canvas, img);
             p.removeChild(img);
