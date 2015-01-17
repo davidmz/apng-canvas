@@ -40,6 +40,11 @@ or the correct [CORS](http://www.w3.org/TR/cors/ "Cross-Origin Resource Sharing"
 (for example, `Access-Control-Allow-Origin: *`).
 For the same reason, the library will not work on a local machine (using the protocol `file://`).
 
+**Important note!** Compression proxies (turbo mode in Opera, "reduce data usage" mode in mobile Chrome, etc.), doesn't know about
+APNG format. These proxies transforms APNGs into static images. To prevent it for *your* images, they need to be served with 
+`Cache-Control: no-transform` HTTP header (see [big article](http://calendar.perfplanet.com/2013/mobile-isp-image-recompression/) about such proxies).
+
+
 API
 -----------
 
