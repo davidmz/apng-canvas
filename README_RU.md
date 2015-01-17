@@ -4,7 +4,7 @@ apng-canvas v2
 Библиотека для отображения Animated PNG ([Wikipedia](http://en.wikipedia.org/wiki/APNG), [стандарт](https://wiki.mozilla.org/APNG_Specification)) 
 в браузере при помощи canvas.
 
-Демонстрация: http://davidmz.github.com/apng-canvas/ (3 Mb of apng files)
+Демонстрация: https://davidmz.github.io/apng-canvas/ (3 Mb of apng files)
 
 **Внимание! API версии 2 библиотеки несовместимо с API версии 1!**
 
@@ -40,7 +40,8 @@ APNG.ifNeeded().then(function() {
 **Важно!** Прокси-сервера, сжимающие трафик (турбо-режим в Опере и Яндекс.Браузере, режим экономии трафика в мобильном Chrome и т. п.), не знают о существовании
 формата APNG, и перекодируют его или в статический PNG или в какой-либо другой формат, в результате чего анимация теряется.
 Чтобы этого избежать, при отдаче APNG с вашего сайта вы должны использовать HTTP-заголовок `Cache-Control: no-transform` 
-(см. [обзорную статью](http://calendar.perfplanet.com/2013/mobile-isp-image-recompression/) по этой теме).
+(см. [обзорную статью](http://calendar.perfplanet.com/2013/mobile-isp-image-recompression/) по этой теме), 
+либо отдавать такие изображения через HTTPS.
 
 API
 -----------

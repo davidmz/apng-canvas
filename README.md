@@ -5,7 +5,7 @@ apng-canvas v2
 
 Library to display Animated PNG ([Wikipedia](http://en.wikipedia.org/wiki/APNG), [specification](https://wiki.mozilla.org/APNG_Specification)) in a browser using canvas.
 
-Working demo: http://davidmz.github.com/apng-canvas/ (around 3 Mb of apng files)
+Working demo: https://davidmz.github.io/apng-canvas/ (around 3 Mb of apng files)
 
 **Please note! API version 2 of the library is incompatible with the API version 1!**
 
@@ -42,7 +42,8 @@ For the same reason, the library will not work on a local machine (using the pro
 
 **Important note!** Compression proxies (turbo mode in Opera, "reduce data usage" mode in mobile Chrome, etc.), doesn't know about
 APNG format. These proxies transforms APNGs into static images. To prevent it for *your* images, they need to be served with 
-`Cache-Control: no-transform` HTTP header (see [big article](http://calendar.perfplanet.com/2013/mobile-isp-image-recompression/) about such proxies).
+`Cache-Control: no-transform` HTTP header (see [big article](http://calendar.perfplanet.com/2013/mobile-isp-image-recompression/) about such proxies),
+or via HTTPS.
 
 
 API
