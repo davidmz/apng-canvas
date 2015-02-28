@@ -1,4 +1,4 @@
-apng-canvas v2
+apng-canvas v2.1.0
 ==============
 
 ([README по-русски](https://github.com/davidmz/apng-canvas/blob/master/README_RU.md))
@@ -55,7 +55,7 @@ High-level methods:
 
 * [APNG.ifNeeded](API.md#user-content-apngifneededignorenativeapng-boolean)
 * [APNG.animateImage](API.md#user-content-apnganimateimageimg-htmlimageelement)
-* [APNG.releaseCanvas](API_RU.md#user-content-apngreleasecanvascanvas-htmlcanvaslement)
+* [APNG.releaseCanvas](API.md#user-content-apngreleasecanvascanvas-htmlcanvaselement)
 
 Low-level methods:
 

@@ -52,7 +52,7 @@ API
 
 * [APNG.ifNeeded](API_RU.md#user-content-apngifneededignorenativeapng-boolean)
 * [APNG.animateImage](API_RU.md#user-content-apnganimateimageimg-htmlimageelement)
-* [APNG.releaseCanvas](API_RU.md#user-content-apngreleasecanvascanvas-htmlcanvaslement)
+* [APNG.releaseCanvas](API_RU.md#user-content-apngreleasecanvascanvas-htmlcanvaselement)
 
 Низкоуровневые методы:
 
