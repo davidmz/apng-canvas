@@ -18,6 +18,10 @@ The `img` element attributes are preserved during replacement.
 
 **Rejected** (no value): The `img` element is not an APNG image, or there was an error when processing it. In this case the element is not replaced with `canvas`. 
 
+#### APNG.releaseCanvas(canvas HTMLCanvasElement)
+Detaches `canvas` from animation loop. May be useful for dynamic created APNG-images.
+This is a synchronous method, it does not return a result.
+
 #### APNG.checkNativeFeatures()
 Checks which technologies are supported by the browser.
 
@@ -73,6 +77,7 @@ Parses binary data from the APNG-file.
         rewind()                // rewind animation to initial state and stop it
         addContext(CanvasRenderingContext2D)    // play animation on this canvas context 
                                                 // (one animation may be played on many contexts)
+        removeContext(CanvasRenderingContext2D) // remove context from animation
     }
 
 **Rejected** (string): The file is not valid APNG, or there was a parsing error. Returns a string with an error message.

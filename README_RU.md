@@ -1,4 +1,4 @@
-apng-canvas v2
+apng-canvas v2.1.0
 ==============
 
 Библиотека для отображения Animated PNG ([Wikipedia](http://en.wikipedia.org/wiki/APNG), [стандарт](https://wiki.mozilla.org/APNG_Specification)) 
@@ -52,6 +52,7 @@ API
 
 * [APNG.ifNeeded](API_RU.md#user-content-apngifneededignorenativeapng-boolean)
 * [APNG.animateImage](API_RU.md#user-content-apnganimateimageimg-htmlimageelement)
+* [APNG.releaseCanvas](API_RU.md#user-content-apngreleasecanvascanvas-htmlcanvaslement)
 
 Низкоуровневые методы:
 
@@ -60,7 +61,7 @@ API
 * [APNG.parseURL](API_RU.md#user-content-apngparseurlurl-string)
 * [APNG.animateContext](API_RU.md#user-content-apnganimatecontexturl-string-canvasrenderingcontext2d-context)
 
-Все методы работают асинхронно и возвращают объект ES6 *Promise*. Большинство браузеров имеют его [встроенную поддержку](http://caniuse.com/#feat=promises), 
+Большинство методов работают асинхронно и возвращают объект ES6 *Promise*. Большинство браузеров имеют его [встроенную поддержку](http://caniuse.com/#feat=promises), 
 для остальных используется [полифилл](https://github.com/jakearchibald/es6-promise), включённый в библиотеку.
 Если вы не работали раньше с Promises, то вам поможет [обзорная статья](http://www.html5rocks.com/en/tutorials/es6/promises/) об этой технологии. В описании методов приводятся
 значения результата-Promise в случае его выполнения (filfilled) или отказа (rejected).

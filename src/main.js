@@ -106,3 +106,13 @@ APNG.animateImage = function (img) {
         });
 };
 
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @return {void}
+ */
+APNG.releaseCanvas = function(canvas) {
+    var ctx = canvas.getContext("2d");
+    if ('_apng_animation' in ctx) {
+        ctx['_apng_animation'].removeContext(ctx);
+    }
+};

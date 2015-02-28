@@ -47,6 +47,26 @@ var Animation = function () {
             ctx.putImageData(dat, 0, 0);
         }
         contexts.push(ctx);
+        ctx['_apng_animation'] = this;
+    };
+
+    /**
+     * Remove canvas context from animation
+     * @param {CanvasRenderingContext2D} ctx
+     * @return {void}
+     */
+    this.removeContext = function (ctx) {
+        var idx = contexts.indexOf(ctx);
+        if (idx === -1) {
+            return;
+        }
+        contexts.splice(idx, 1);
+        if (contexts.length === 0) {
+            this.rewind();
+        }
+        if ('_apng_animation' in ctx) {
+            delete ctx['_apng_animation'];
+        }
     };
 
     //noinspection JSUnusedGlobalSymbols

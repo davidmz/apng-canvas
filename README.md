@@ -55,6 +55,7 @@ High-level methods:
 
 * [APNG.ifNeeded](API.md#user-content-apngifneededignorenativeapng-boolean)
 * [APNG.animateImage](API.md#user-content-apnganimateimageimg-htmlimageelement)
+* [APNG.releaseCanvas](API_RU.md#user-content-apngreleasecanvascanvas-htmlcanvaslement)
 
 Low-level methods:
 
@@ -63,7 +64,7 @@ Low-level methods:
 * [APNG.parseURL](API.md#user-content-apngparseurlurl-string)
 * [APNG.animateContext](API.md#user-content-apnganimatecontexturl-string-canvasrenderingcontext2d-context)
 
-All methods work asynchronously and return the ES6 *Promise* object. Most browsers have [built-in support](http://caniuse.com/#feat=promises) for it. 
+Most methods work asynchronously and return the ES6 *Promise* object. Most browsers have [built-in support](http://caniuse.com/#feat=promises) for it. 
 For others browsers, library uses [polifill](https://github.com/jakearchibald/es6-promise) (included in the library).
 If you have not worked before with Promises, then you should read the [review paper](http://www.html5rocks.com/en/tutorials/es6/promises/) about this technology. 
 The method description includes values of the Promise result in cases where it is *fulfilled* or *rejected*.
