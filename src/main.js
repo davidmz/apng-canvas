@@ -11,7 +11,6 @@
  */
 "use strict";
 
-var Promise = Promise || require('es6-promise').Promise;
 var support = require("./support-test");
 var parseAPNG = require("./parser");
 var loadUrl = require('./loader');
@@ -25,7 +24,7 @@ APNG.ifNeeded = support.ifNeeded;
  * @param {ArrayBuffer} buffer
  * @return {Promise}
  */
-APNG.parseBuffer = function (buffer) { return parseAPNG(new Uint8Array(buffer)); };
+APNG.parseBuffer = function (buffer) { return parseAPNG(buffer); };
 
 var url2promise = {};
 /**
@@ -64,7 +63,7 @@ APNG.animateImage = function (img) {
             canvas.height = anim.height;
             Array.prototype.slice.call(img.attributes).forEach(function (attr) {
                 if (["alt", "src", "usemap", "ismap", "data-is-apng", "width", "height"].indexOf(attr.nodeName) == -1) {
-                    canvas.setAttributeNode(attr.cloneNode());
+                    canvas.setAttributeNode(attr.cloneNode(false));
                 }
             });
             canvas.setAttribute("data-apng-src", img.src);
