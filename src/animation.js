@@ -83,6 +83,15 @@ var Animation = function () {
      */
     this.isFinished = function () { return finished; };
 
+    //noinspection JSUnusedGlobalSymbols
+    /**
+     * Is animation currentTime?
+     * @return {integer}
+     */
+    this.getTime = function () {
+        return Math.round(this.playTime * (fNum / ani.frames.length));
+    };
+
     // Private
 
     var ani = this,
@@ -94,6 +103,9 @@ var Animation = function () {
         contexts = [];
 
     var tick = function (now) {
+        if (500 < now - nextRenderTime) {
+            nextRenderTime = now;
+        }
         while (played && nextRenderTime <= now) renderFrame(now);
         if (played) requestAnimationFrame(tick);
     };
@@ -129,7 +141,7 @@ var Animation = function () {
             nextRenderTime += frame.delay;
         } else {
             played = false;
-            finished = false;
+            finished = true;
         }
     };
 };
