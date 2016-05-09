@@ -17,7 +17,7 @@ var checkNativeFeatures = oncePromise(function (resolve) {
         TypedArrays: ("ArrayBuffer" in global),
         BlobURLs: ("URL" in global),
         requestAnimationFrame: ("requestAnimationFrame" in global),
-        pageProtocol: (location.protocol == "http:" && location.protocol == "https:"),
+        pageProtocol: (location.protocol == "http:" || location.protocol == "https:"),
         canvas: ("getContext" in document.createElement("canvas")),
         APNG: false
     };
