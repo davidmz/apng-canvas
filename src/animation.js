@@ -129,7 +129,7 @@ var Animation = function () {
             nextRenderTime += frame.delay;
         } else {
             played = false;
-            finished = false;
+            finished = true;
         }
     };
 };
