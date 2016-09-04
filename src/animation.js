@@ -102,6 +102,12 @@ var Animation = function () {
         var f = fNum++ % ani.frames.length;
         var frame = ani.frames[f];
 
+        if (!(ani.numPlays == 0 || fNum / ani.frames.length <= ani.numPlays)) {
+            played = false;
+            finished = true;
+            return;
+        }
+
         if (f == 0) {
             contexts.forEach(function (ctx) {ctx.clearRect(0, 0, ani.width, ani.height);});
             prevF = null;
@@ -123,14 +129,9 @@ var Animation = function () {
         }
         contexts.forEach(function (ctx) {ctx.drawImage(frame.img, frame.left, frame.top);});
 
-        if (ani.numPlays == 0 || fNum / ani.frames.length < ani.numPlays) {
-            if (nextRenderTime == 0) nextRenderTime = now;
-            while (now > nextRenderTime + ani.playTime) nextRenderTime += ani.playTime;
-            nextRenderTime += frame.delay;
-        } else {
-            played = false;
-            finished = false;
-        }
+        if (nextRenderTime == 0) nextRenderTime = now;
+        while (now > nextRenderTime + ani.playTime) nextRenderTime += ani.playTime;
+        nextRenderTime += frame.delay;
     };
 };
 
