@@ -11,6 +11,7 @@
  */
 "use strict";
 
+var Map = Map || require('es6-map');
 var support = require("./support-test");
 var parseAPNG = require("./parser");
 var loadUrl = require('./loader');
@@ -26,14 +27,14 @@ APNG.ifNeeded = support.ifNeeded;
  */
 APNG.parseBuffer = function (buffer) { return parseAPNG(buffer); };
 
-var url2promise = {};
+var url2promise = new Map();
 /**
  * @param {String} url
  * @return {Promise}
  */
 APNG.parseURL = function (url) {
-    if (!(url in url2promise)) url2promise[url] = loadUrl(url).then(parseAPNG);
-    return url2promise[url];
+    if (!(url2promise.has(url))) url2promise.set(url, loadUrl(url).then(parseAPNG));
+    return url2promise.get(url);
 };
 
 /**

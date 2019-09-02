@@ -12,13 +12,14 @@
   "homepage": "https://github.com/davidmz/apng-canvas",
   "license": "MIT",
   "dependencies": {
+    "es6-map": "^0.1.5",
     "es6-promise": "latest"
   },
   "devDependencies": {
     "gulp": "latest",
-    "gulp-uglify": "latest",
     "gulp-add-src": "~0.2.0",
+    "gulp-browserify": "~0.5.0",
     "gulp-concat": "~2.4.3",
-    "gulp-browserify": "~0.5.0"
+    "gulp-uglify": "latest"
   }
 }
