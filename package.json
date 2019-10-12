@@ -1,6 +1,6 @@
 {
   "name": "apng-canvas",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": "David Mzareulyan",
   "description": "Library for displaing animated PNG files in browsers with canvas support",
   "keywords": [
@@ -11,14 +11,19 @@
   ],
   "homepage": "https://github.com/davidmz/apng-canvas",
   "license": "MIT",
+  "scripts": {
+    "build": "gulp",
+    "build-dev": "gulp devel"
+  },
   "dependencies": {
-    "es6-promise": "latest"
+    "es6-promise": "~4.2.8",
+    "gulp-append-prepend": "~1.0.8"
   },
   "devDependencies": {
-    "gulp": "latest",
-    "gulp-uglify": "latest",
-    "gulp-add-src": "~0.2.0",
-    "gulp-concat": "~2.4.3",
-    "gulp-browserify": "~0.5.0"
+    "gulp": "~4.0.2",
+    "gulp-append-prepend": "~1.0.8",
+    "gulp-uglify": "~3.0.2",
+    "gulp-concat": "~2.6.1",
+    "gulp-browserify": "~0.5.1"
   }
 }

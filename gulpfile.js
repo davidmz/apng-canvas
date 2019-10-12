@@ -2,27 +2,36 @@ var
     gulp = require('gulp'),
     browserify = require('gulp-browserify'),
     uglify = require('gulp-uglify'),
-    addsrc = require('gulp-add-src'),
+    append = require('gulp-append-prepend'),
     concat = require('gulp-concat');
+    package = require('./package.json');
 
 gulp.task('build', function () {
-    gulp.src(['./src/main.js'])
+    var aboutText = "/**\n"+
+    " * "+package.name+" v"+package.version+"\n"+
+    " *\n"+
+    " * @copyright 2011-"+(new Date().getFullYear())+" "+package.author+"\n"+
+    " * @link "+package.homepage+"\n"+
+    " * @license "+package.license+"\n"+
+    " */\n";
+
+    return gulp.src(['./src/main.js'])
         .pipe(browserify())
         .pipe(uglify())
-        .pipe(addsrc.prepend('./src/about.js'))
+        .pipe(append.prependText(aboutText))
         .pipe(concat('apng-canvas.min.js'))
         .pipe(gulp.dest('./build/'));
 });
 
 gulp.task('devel', function () {
-    gulp.src(['./src/main.js'])
+  return gulp.src(['./src/main.js'])
         .pipe(browserify({debug: true}))
         .pipe(concat('apng-canvas.js'))
         .pipe(gulp.dest('./test/'));
 });
 
-gulp.task('watch', function () { gulp.watch('./src/*.js', ['devel']);});
+gulp.task('watch', function () { return gulp.watch('./src/*.js', ['devel']);});
 
-gulp.task('default', ['devel']);
+gulp.task('default', gulp.series('build'));
 
 
