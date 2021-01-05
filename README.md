@@ -32,6 +32,17 @@ APNG.ifNeeded().then(function() {
 });
 ```
 
+You can decide if it will play automatically. 
+You can stop it and control its play rate.
+```javascript
+    APNG.animateImage(image,false).then(anim=>{
+        anim.play(2)
+        setTimeout(()=>{
+            anim.stop()
+        },1000)
+    });
+```
+
 Limitations
 -----------
 
