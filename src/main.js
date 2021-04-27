@@ -2,7 +2,7 @@
  * API:
  *
  * ifNeeded([ignoreNativeAPNG bool]) → Promise()
- * animateImage(img HTMLImageElement) → Promise()
+ * animateImage(img HTMLImageElement) → Promise(Animation)
  *
  * animateContext(url String, CanvasRenderingContext2D context) → Promise(Animation)
  * parseBuffer(ArrayBuffer) → Promise(Animation)
@@ -51,9 +51,11 @@ APNG.animateContext = function (url, context) {
 
 /**
  * @param {HTMLImageElement} img
+ * @param {boolean} autoplay
  * @return {Promise}
  */
-APNG.animateImage = function (img) {
+APNG.animateImage = function (img, autoplay) {
+    autoplay = autoplay != undefined ? autoplay : true;
     img.setAttribute("data-is-apng", "progress");
     return APNG.parseURL(img.src).then(
         function (anim) {
@@ -98,7 +100,13 @@ APNG.animateImage = function (img) {
             p.insertBefore(canvas, img);
             p.removeChild(img);
             anim.addContext(canvas.getContext("2d"));
-            anim.play();
+
+            if (autoplay === true) {
+                anim.play();
+            };
+
+            return Promise.resolve(anim);
+
         },
         function () {
             img.setAttribute("data-is-apng", "no");
@@ -109,7 +117,7 @@ APNG.animateImage = function (img) {
  * @param {HTMLCanvasElement} canvas
  * @return {void}
  */
-APNG.releaseCanvas = function(canvas) {
+APNG.releaseCanvas = function (canvas) {
     var ctx = canvas.getContext("2d");
     if ('_apng_animation' in ctx) {
         ctx['_apng_animation'].removeContext(ctx);

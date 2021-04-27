@@ -12,16 +12,26 @@ var Animation = function () {
     this.numPlays = 0;
     this.playTime = 0;
     this.frames = [];
+    this.rate = 1;
 
     /**
      * Play animation (if not finished)
      * @return {void}
      */
-    this.play = function () {
+    this.play = function (rate) {
+        if (rate && rate > 0) this.rate = rate;
         if (played || finished) return;
         this.rewind();
         played = true;
         requestAnimationFrame(tick);
+    };
+
+    /**
+     * Stop animation
+     * @return {void}
+     */
+    this.stop = function () {
+        this.rewind()
     };
 
     /**
@@ -98,6 +108,8 @@ var Animation = function () {
         if (played) requestAnimationFrame(tick);
     };
 
+    var that = this;
+
     var renderFrame = function (now) {
         var f = fNum++ % ani.frames.length;
         var frame = ani.frames[f];
@@ -109,15 +121,15 @@ var Animation = function () {
         }
 
         if (f == 0) {
-            contexts.forEach(function (ctx) {ctx.clearRect(0, 0, ani.width, ani.height);});
+            contexts.forEach(function (ctx) { ctx.clearRect(0, 0, ani.width, ani.height); });
             prevF = null;
             if (frame.disposeOp == 2) frame.disposeOp = 1;
         }
 
         if (prevF && prevF.disposeOp == 1) {
-            contexts.forEach(function (ctx) {ctx.clearRect(prevF.left, prevF.top, prevF.width, prevF.height);});
+            contexts.forEach(function (ctx) { ctx.clearRect(prevF.left, prevF.top, prevF.width, prevF.height); });
         } else if (prevF && prevF.disposeOp == 2) {
-            contexts.forEach(function (ctx) {ctx.putImageData(prevF.iData, prevF.left, prevF.top);});
+            contexts.forEach(function (ctx) { ctx.putImageData(prevF.iData, prevF.left, prevF.top); });
         }
         prevF = frame;
         prevF.iData = null;
@@ -125,13 +137,16 @@ var Animation = function () {
             prevF.iData = contexts[0].getImageData(frame.left, frame.top, frame.width, frame.height);
         }
         if (frame.blendOp == 0) {
-            contexts.forEach(function (ctx) {ctx.clearRect(frame.left, frame.top, frame.width, frame.height);});
+            contexts.forEach(function (ctx) { ctx.clearRect(frame.left, frame.top, frame.width, frame.height); });
         }
-        contexts.forEach(function (ctx) {ctx.drawImage(frame.img, frame.left, frame.top);});
+
+        contexts.forEach(function (ctx) {
+            ctx.drawImage(frame.img, frame.left, frame.top);
+        });
 
         if (nextRenderTime == 0) nextRenderTime = now;
         while (now > nextRenderTime + ani.playTime) nextRenderTime += ani.playTime;
-        nextRenderTime += frame.delay;
+        nextRenderTime += frame.delay / that.rate;
     };
 };
 

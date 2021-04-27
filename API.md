@@ -10,11 +10,11 @@ If optional argument *ignoreNativeAPNG* is *true*, then native APNG support isn'
 
 **Rejected** (no value): The browser has native support for APNG (if *ignoreNativeAPNG* not used) or does not support all the necessary technologies for it to work.
 
-#### APNG.animateImage(img HTMLImageElement)
+#### APNG.animateImage(img HTMLImageElement,autoplay boolean)
 Creates a `canvas` element where the APNG animation plays. The `img` element is removed from the DOM and replaced by `canvas`.
 The `img` element attributes are preserved during replacement.
 
-**Fulfilled** (no value): The `img` element is an APNG image.
+**Fulfilled** (Animation): The `img` element is an APNG image.
 
 **Rejected** (no value): The `img` element is not an APNG image, or there was an error when processing it. In this case the element is not replaced with `canvas`. 
 

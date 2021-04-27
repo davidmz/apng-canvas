@@ -1,6 +1,6 @@
 {
   "name": "apng-canvas",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "author": "David Mzareulyan",
   "description": "Library for displaing animated PNG files in browsers with canvas support",
   "keywords": [
